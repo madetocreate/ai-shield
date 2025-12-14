@@ -1,0 +1,71 @@
+name: ai-shield
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-shield-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: litellm
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    container_name: ai-shield-presidio-analyzer
+    restart: unless-stopped
+    ports:
+      - "5001:3000"
+
+  presidio-anonymizer:
+    image: mcr.microsoft.com/presidio-anonymizer:latest
+    container_name: ai-shield-presidio-anonymizer
+    restart: unless-stopped
+    ports:
+      - "5002:3000"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.103.0
+    container_name: ai-shield-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./deploy/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+
+  gateway:
+    build:
+      context: ./apps/gateway
+    container_name: ai-shield-gateway
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      presidio-analyzer:
+        condition: service_started
+      presidio-anonymizer:
+        condition: service_started
+      otel-collector:
+        condition: service_started
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./apps/gateway/config.yaml:/app/config.yaml:ro
+      - ./apps/gateway/policies:/app/policies:ro
+
+volumes:
+  postgres_data:

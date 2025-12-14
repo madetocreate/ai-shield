@@ -1,0 +1,10 @@
+presets:
+  public_website:
+    injection_block_threshold: 6
+    redact_output_secrets: true
+  internal_support:
+    injection_block_threshold: 8
+    redact_output_secrets: true
+  ops_agent:
+    injection_block_threshold: 4
+    redact_output_secrets: true
