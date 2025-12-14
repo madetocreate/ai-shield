@@ -1,60 +1,22 @@
 model_list:
-  - model_name: gpt-4o
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
   - model_name: gpt-4o-mini
     litellm_params:
       model: openai/gpt-4o-mini
       api_key: os.environ/OPENAI_API_KEY
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
 
 litellm_settings:
-  callbacks:
-    - otel
-    - custom_callbacks.ai_shield_handler
+  callbacks: custom_callbacks.ai_shield_callback
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
-  enforce_user_param: true
-  otel: true
   store_model_in_db: true
-  supported_db_objects: ["key", "team", "user", "mcp", "guardrail"]
-
-guardrails:
-  - guardrail_name: "presidio-pii-pre"
-    litellm_params:
-      guardrail: presidio
-      mode: "pre_call"
-      presidio_language: "de"
-      default_on: true
-      pii_entities_config:
-        CREDIT_CARD: "BLOCK"
-        EMAIL_ADDRESS: "MASK"
-        PHONE_NUMBER: "MASK"
-
-  - guardrail_name: "presidio-pii-mcp"
-    litellm_params:
-      guardrail: presidio
-      mode: "pre_mcp_call"
-      presidio_language: "de"
-      default_on: true
-      pii_entities_config:
-        CREDIT_CARD: "BLOCK"
-        EMAIL_ADDRESS: "MASK"
-        PHONE_NUMBER: "MASK"
-
-  - guardrail_name: "tool-permission-default"
-    litellm_params:
-      guardrail: tool_permission
-      mode: "post_call"
-      default_on: true
-      default_action: "deny"
-      on_disallowed_action: "rewrite"
-      violation_message_template: "Tool '{tool_name}' geblockt (Policy: {rule_id})."
-      rules:
-        - id: "deny_everything_by_default"
-          tool_name: ".*"
-          decision: "deny"
-
-mcp_servers: {}
+  supported_db_objects:
+    - key
+    - team
+    - user
+    - mcp

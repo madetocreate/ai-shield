@@ -1,10 +1,27 @@
+default_preset: public_website
+
 presets:
   public_website:
-    injection_block_threshold: 6
-    redact_output_secrets: true
+    pii:
+      email: mask
+      phone: mask
+      credit_card: block
+    mcp:
+      auto_approve_requires_allowlist: true
+      risky_tool_name_regex: "(?i)(create|update|delete|remove|drop|send|write|post|put|patch|exec|run|payment|transfer|email)"
   internal_support:
-    injection_block_threshold: 8
-    redact_output_secrets: true
+    pii:
+      email: mask
+      phone: mask
+      credit_card: mask
+    mcp:
+      auto_approve_requires_allowlist: true
+      risky_tool_name_regex: "(?i)(delete|remove|drop|payment|transfer|send_email)"
   ops_agent:
-    injection_block_threshold: 4
-    redact_output_secrets: true
+    pii:
+      email: mask
+      phone: mask
+      credit_card: block
+    mcp:
+      auto_approve_requires_allowlist: true
+      risky_tool_name_regex: "(?i)(create|update|delete|remove|drop|send|write|post|put|patch|exec|run|payment|transfer|email)"

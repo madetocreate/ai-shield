@@ -1,3 +1,2 @@
-litellm[proxy]==1.77.5
+litellm[proxy]==1.80.10
 PyYAML==6.0.2
-requests==2.32.3

@@ -6,7 +6,6 @@ receivers:
 
 exporters:
   logging:
-    loglevel: info
 
 service:
   pipelines:
