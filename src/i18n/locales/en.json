@@ -1,0 +1,320 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageDescription": "Select your preferred language",
+    "theme": "Theme",
+    "themeDescription": "Choose between Light Mode, Dark Mode, or System setting",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "themeSystemDetected": "System: {{theme}}",
+    "general": "General",
+    "notifications": "Notifications",
+    "account": "Account",
+    "security": "Security"
+  },
+  "commandPalette": {
+    "placeholder": "Search commands...",
+    "noResults": "No results found",
+    "navigate": "Navigate",
+    "select": "Select",
+    "close": "Close",
+    "marketplace": "Open Marketplace",
+    "marketplaceDesc": "Browse and install agents",
+    "analytics": "Open Analytics",
+    "analyticsDesc": "View metrics and reports",
+    "integrations": "Open Integrations",
+    "integrationsDesc": "Connect external services",
+    "realtime": "Open Real-time Dashboard",
+    "realtimeDesc": "Live metrics and alerts",
+    "settings": "Open Settings",
+    "settingsDesc": "Manage system settings",
+    "docs": "Open Documentation",
+    "docsDesc": "Help and guides",
+    "language": "Change Language",
+    "languageDesc": "Open language settings"
+  },
+  "suggestions": {
+    "marketplaceTip": "Tip: Browse Agents",
+    "marketplaceTipDesc": "Discover new agents in the marketplace that can improve your workflows.",
+    "createReport": "Create your first report",
+    "createReportDesc": "Analyze your data with custom reports.",
+    "createNow": "Create Now",
+    "firstAgent": "Create your first agent",
+    "firstAgentDesc": "Start with a pre-built template or create your own agent.",
+    "browseAgents": "Browse Agents",
+    "expandAgents": "Expand your agent collection",
+    "expandAgentsDesc": "You already have {{count}} agents. Discover more possibilities in the marketplace.",
+    "explore": "Explore"
+  },
+  "marketplace": {
+    "title": "Agent Marketplace",
+    "searchPlaceholder": "Search agents...",
+    "category": "Category",
+    "allCategories": "All Categories",
+    "categoryGastronomy": "Gastronomy",
+    "categoryPractice": "Practice",
+    "categoryGeneral": "General",
+    "install": "Install",
+    "uninstall": "Uninstall",
+    "installed": "Installed",
+    "rating": "Rating",
+    "reviews": "Reviews",
+    "downloads": "Installations",
+    "author": "Author",
+    "version": "Version",
+    "description": "Description",
+    "tags": "Tags",
+    "by": "by",
+    "docs": "Docs",
+    "noAgentsFound": "No agents found",
+    "noAgentsFoundDesc": "No agents found matching your search criteria. Try different search terms or browse all categories.",
+    "browseTemplates": "Browse Templates",
+    "tooltip": "Filter agents by category",
+    "installTooltip": "Install agent and use immediately",
+    "uninstallTooltip": "Uninstall agent",
+    "loadingAgents": "Loading agents...",
+    "installSuccess": "Agent installed successfully",
+    "uninstallSuccess": "Agent uninstalled successfully",
+    "installError": "Error installing agent",
+    "uninstallError": "Error uninstalling agent"
+  },
+  "integrations": {
+    "title": "Integrations",
+    "description": "Connect your external services with AI Shield. All connections are securely managed via Nango.",
+    "approvalQueue": "Approval Queue",
+    "pendingApprovals": "Write operations require your approval before execution.",
+    "noPendingApprovals": "No pending approvals",
+    "approve": "Approve & Execute",
+    "reject": "Reject",
+    "created": "Created",
+    "provider": "Provider",
+    "account": "Account",
+    "status": "Pending",
+    "statusConnected": "Connected",
+    "statusDisconnected": "Disconnected",
+    "statusPending": "Pending",
+    "actions": "Actions",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "confirmDisconnect": "Do you really want to disconnect {{provider}}?",
+    "permissions": "Permissions",
+    "approveSuccess": "Integration approved successfully",
+    "rejectSuccess": "Integration rejected successfully",
+    "approveError": "Error approving",
+    "rejectError": "Error rejecting"
+  },
+  "common": {
+    "preview": "Preview"
+  },
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "overview": "Overview",
+    "metrics": "Metrics",
+    "reports": "Reports",
+    "dateRange": "Date Range",
+    "today": "Today",
+    "week": "Week",
+    "month": "Month",
+    "year": "Year",
+    "selectMetric": "Select metric",
+    "currentValue": "Current Value",
+    "average": "Average",
+    "trend": "Trend",
+    "anomaly": "Anomaly",
+    "detected": "Detected",
+    "normal": "Normal",
+    "score": "Score",
+    "forecast7Days": "7-Day Forecast",
+    "prediction": "Prediction",
+    "lowerBound": "Lower Bound",
+    "upperBound": "Upper Bound",
+    "statistics": "Statistics",
+    "median": "Median",
+    "standardDeviation": "Standard Deviation",
+    "dataPoints": "Data Points",
+    "anomalyDetails": "Anomaly Details",
+    "forecastMethod": "Forecast Method",
+    "noMetricSelected": "No metric selected",
+    "noMetricSelectedDesc": "Select a metric to view insights, trends, and forecasts.",
+    "selectMetricNow": "Select Metric"
+  },
+  "realtime": {
+    "title": "Real-time Dashboard",
+    "metrics": "Real-time Metrics",
+    "alerts": "Alerts",
+    "noAlerts": "No active alerts",
+    "resolve": "Resolve",
+    "timestamp": "Timestamp",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "activeAlerts": "Active Alerts",
+    "agent": "Agent",
+    "metricsTrend": "Metrics Trend",
+    "metric": "Metric",
+    "noMetricsAvailable": "No metrics available",
+    "noMetricsAvailableDesc": "No real-time metrics are available yet. Metrics will be automatically updated once data is available.",
+    "refresh": "Refresh"
+  },
+  "onboarding": {
+    "step": "Step",
+    "of": "of",
+    "complete": "Complete",
+    "skip": "Skip",
+    "welcome": "Welcome to AI Shield!",
+    "welcomeDesc": "Let's show you how to use the system.",
+    "steps": {
+      "welcome": {
+        "title": "Welcome!",
+        "description": "Welcome to AI Shield! This quick tour will show you the most important features."
+      },
+      "marketplace": {
+        "title": "Agent Marketplace",
+        "description": "Here you'll find all available agents. You can search, install, and manage them.",
+        "action": "Go to Marketplace"
+      },
+      "integrations": {
+        "title": "Integrations",
+        "description": "Connect external services like Google Calendar, Shopify, or WhatsApp with AI Shield."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Analyze your agents' performance, spot trends, and create reports."
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "Customize language, theme, and other settings to your preferences."
+      }
+    }
+  },
+  "toast": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "aiHelp": {
+    "title": "AI Help",
+    "openChat": "Open help",
+    "welcome": "How can I help you?",
+    "placeholder": "Ask a question...",
+    "didYouMean": "Did you mean: {{error}}?",
+    "checkConnection": "Check connection",
+    "verifyCredentials": "Verify credentials",
+    "contactSupport": "Contact support",
+    "installAgentHelp": "To install an agent, go to the Marketplace, select an agent, and click 'Install'.",
+    "errorHelp": "If you see an error, please check the error message above. Often it helps to reload the page or check your connection.",
+    "integrationHelp": "To connect an integration, go to Integrations, select a provider, and click 'Connect'.",
+    "defaultHelp": "I can help you with questions about agents, integrations, analytics, and more. What would you like to know?",
+    "suggestionCheckLogs": "Check logs",
+    "suggestionRestart": "Restart system"
+  },
+  "errors": {
+    "genericError": "An error occurred",
+    "networkError": "Connection problem",
+    "authError": "Authentication error",
+    "permissionError": "Permission error",
+    "howToFix": "How to fix?",
+    "tryAgain": "Try again",
+    "checkConnection": "Check connection",
+    "checkInternet": "Check internet connection",
+    "checkFirewall": "Check firewall settings",
+    "tryAgainLater": "Try again later",
+    "checkCredentials": "Check credentials",
+    "reLogin": "Log in again",
+    "contactSupport": "Contact support",
+    "checkPermissions": "Check permissions",
+    "contactAdmin": "Contact administrator",
+    "upgradePlan": "Upgrade plan",
+    "suggestions": "Suggestions",
+    "helpCenter": "Open Help Center"
+  },
+  "shortcuts": {
+    "search": "Open search",
+    "new": "Create new",
+    "save": "Save",
+    "settings": "Settings",
+    "help": "Help"
+  },
+  "sidebar": {
+    "title": "Navigation",
+    "dashboard": "Dashboard",
+    "marketplace": "Marketplace",
+    "analytics": "Analytics",
+    "integrations": "Integrations",
+    "realtime": "Realtime",
+    "settings": "Settings",
+    "onboarding": "Onboarding",
+    "wizards": "Wizards",
+    "devTools": "Dev Tools",
+    "devMode": "Development Mode",
+    "onboardingStarted": "Onboarding started",
+    "onboardingComplete": "Onboarding completed",
+    "wizardsComingSoon": "Wizards coming soon"
+  },
+  "wizards": {
+    "title": "Wizards",
+    "step": "Step",
+    "of": "of",
+    "finish": "Finish",
+    "complete": "Wizard completed",
+    "agentSetup": {
+      "title": "Agent Setup",
+      "description": "Create a new agent step by step",
+      "steps": {
+        "selectTemplate": {
+          "title": "Select Template",
+          "description": "Choose a template for your agent",
+          "content": "Template selection will be shown here..."
+        },
+        "configure": {
+          "title": "Configure",
+          "description": "Configure your agent",
+          "content": "Configuration will be shown here..."
+        },
+        "review": {
+          "title": "Review",
+          "description": "Review your settings",
+          "content": "Review will be shown here..."
+        }
+      }
+    },
+    "integrationSetup": {
+      "title": "Integration Setup",
+      "description": "Set up a new integration",
+      "steps": {
+        "selectProvider": {
+          "title": "Select Provider",
+          "description": "Choose an integration provider",
+          "content": "Provider selection will be shown here..."
+        },
+        "configure": {
+          "title": "Configure",
+          "description": "Configure the integration",
+          "content": "Configuration will be shown here..."
+        }
+      }
+    }
+  }
+}

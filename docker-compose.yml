@@ -19,6 +19,59 @@ services:
       timeout: 3s
       retries: 30
 
+  postgres-langfuse:
+    image: postgres:16-alpine
+    container_name: ai-shield-postgres-langfuse
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse}
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_data:/var/lib/postgresql/data
+    ports:
+      - "${LANGFUSE_DB_PORT:-5436}:5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U langfuse -d langfuse"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-shield-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD","redis-cli","ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: ai-shield-langfuse
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD:-langfuse}@postgres-langfuse:5432/langfuse
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-change-me-in-production}
+      NEXTAUTH_URL: http://localhost:${LANGFUSE_PORT:-3000}
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "true"
+    ports:
+      - "${LANGFUSE_PORT:-3000}:3000"
+    depends_on:
+      postgres-langfuse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD","wget","--quiet","--tries=1","--spider","http://localhost:3000/api/public/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   presidio-analyzer:
     image: mcr.microsoft.com/presidio-analyzer:latest
     container_name: ai-shield-presidio-analyzer
@@ -63,6 +116,10 @@ services:
         condition: service_started
       otel-collector:
         condition: service_started
+      redis:
+        condition: service_healthy
+      langfuse:
+        condition: service_healthy
     ports:
       - "${AI_SHIELD_HOST_PORT:-4050}:4000"
     volumes:
@@ -87,5 +144,67 @@ services:
       - ./apps/control-plane/data:/app/data
     command: ["uvicorn","app.main:app","--host","0.0.0.0","--port","8010"]
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: ai-shield-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"
+      - "${JAEGER_GRPC_PORT:-4317}:4317"
+      - "${JAEGER_HTTP_PORT:-4318}:4318"
+    depends_on:
+      - otel-collector
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-shield-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-shield-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+
+  nginx:
+    image: nginx:alpine
+    container_name: ai-shield-nginx
+    restart: unless-stopped
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    depends_on:
+      - gateway
+      - control-plane
+      - langfuse
+
 volumes:
   postgres_data:
+  langfuse_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:

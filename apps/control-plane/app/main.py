@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 DATA_DIR = Path(os.environ.get("CONTROL_PLANE_DATA_DIR", "/app/data"))
@@ -111,7 +112,55 @@ def _allowed_params_from_tool(tool: Dict[str, Any]) -> Optional[List[str]]:
         return None
     return [str(k) for k in props.keys()]
 
-app = FastAPI()
+app = FastAPI(
+    title="AI Shield Control Plane",
+    description="""
+    AI Shield Control Plane API für MCP-Server-Verwaltung und Tool-Policy-Management.
+    
+    ## Features
+    
+    * **MCP Server Registry**: Zentrale Verwaltung von MCP-Servern
+    * **Tool Pinning**: Automatische Kategorisierung und Policy-Generierung
+    * **LiteLLM Integration**: Export von LiteLLM-Konfigurationen
+    * **Integrations**: OAuth-Integrationen via Nango (Google, Shopify, WooCommerce, WhatsApp)
+    
+    ## Authentifizierung
+    
+    Alle Endpoints (außer `/health`) erfordern den Header:
+    ```
+    x-ai-shield-admin-key: <CONTROL_PLANE_ADMIN_KEY>
+    ```
+    """,
+    version="1.0.0",
+    contact={
+        "name": "AI Shield",
+        "url": "https://github.com/madetocreate/ai-shield",
+    },
+    license_info={
+        "name": "MIT",
+    },
+)
+
+# CORS Middleware für Frontend-Zugriff
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include integrations routers
+from app.integrations.api import router as integrations_router
+from app.integrations.approvals import router as approvals_router
+app.include_router(integrations_router)
+app.include_router(approvals_router)
+
+# Include auth routers
+from app.auth import router as auth_router
+from app.auth_enhanced import enhanced_router as auth_enhanced_router
+app.include_router(auth_router)
+app.include_router(auth_enhanced_router)
 
 @app.get("/health")
 def health():

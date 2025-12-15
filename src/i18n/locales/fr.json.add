@@ -1,0 +1,73 @@
+  "onboarding": {
+    "step": "Étape",
+    "of": "de",
+    "complete": "Terminer",
+    "skip": "Passer",
+    "welcome": "Bienvenue dans AI Shield!",
+    "welcomeDesc": "Laissez-nous vous montrer comment utiliser le système.",
+    "steps": {
+      "welcome": {
+        "title": "Bienvenue!",
+        "description": "Bienvenue dans AI Shield! Cette visite rapide vous montrera les fonctionnalités les plus importantes."
+      },
+      "marketplace": {
+        "title": "Marketplace d'Agents",
+        "description": "Ici, vous trouverez tous les agents disponibles. Vous pouvez les rechercher, les installer et les gérer.",
+        "action": "Aller au Marketplace"
+      },
+      "integrations": {
+        "title": "Intégrations",
+        "description": "Connectez des services externes comme Google Calendar, Shopify ou WhatsApp avec AI Shield."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Analysez les performances de vos agents, repérez les tendances et créez des rapports."
+      },
+      "settings": {
+        "title": "Paramètres",
+        "description": "Personnalisez la langue, le thème et d'autres paramètres selon vos préférences."
+      }
+    }
+  },
+  "toast": {
+    "success": "Succès",
+    "error": "Erreur",
+    "warning": "Avertissement",
+    "info": "Info"
+  },
+  "aiHelp": {
+    "title": "Aide IA",
+    "openChat": "Ouvrir l'aide",
+    "welcome": "Comment puis-je vous aider?",
+    "placeholder": "Posez une question...",
+    "didYouMean": "Vouliez-vous dire: {{error}}?",
+    "checkConnection": "Vérifier la connexion",
+    "verifyCredentials": "Vérifier les identifiants",
+    "contactSupport": "Contacter le support",
+    "installAgentHelp": "Pour installer un agent, allez au Marketplace, sélectionnez un agent et cliquez sur 'Installer'.",
+    "errorHelp": "Si vous voyez une erreur, veuillez vérifier le message d'erreur ci-dessus. Il est souvent utile de recharger la page ou de vérifier votre connexion.",
+    "integrationHelp": "Pour connecter une intégration, allez à Intégrations, sélectionnez un fournisseur et cliquez sur 'Connecter'.",
+    "defaultHelp": "Je peux vous aider avec des questions sur les agents, les intégrations, les analytics et plus encore. Que souhaitez-vous savoir?",
+    "suggestionCheckLogs": "Vérifier les logs",
+    "suggestionRestart": "Redémarrer le système"
+  },
+  "errors": {
+    "genericError": "Une erreur s'est produite",
+    "networkError": "Problème de connexion",
+    "authError": "Erreur d'authentification",
+    "permissionError": "Erreur de permission",
+    "howToFix": "Comment résoudre?",
+    "tryAgain": "Réessayer",
+    "checkConnection": "Vérifier la connexion",
+    "checkInternet": "Vérifier la connexion Internet",
+    "checkFirewall": "Vérifier les paramètres du pare-feu",
+    "tryAgainLater": "Réessayer plus tard",
+    "checkCredentials": "Vérifier les identifiants",
+    "reLogin": "Se reconnecter",
+    "contactSupport": "Contacter le support",
+    "checkPermissions": "Vérifier les permissions",
+    "contactAdmin": "Contacter l'administrateur",
+    "upgradePlan": "Mettre à niveau le plan",
+    "suggestions": "Suggestions",
+    "helpCenter": "Ouvrir le Centre d'aide"
+  }

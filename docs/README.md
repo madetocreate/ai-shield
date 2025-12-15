@@ -105,26 +105,53 @@ Die Control Plane verwaltet MCP-Server-Registrierungen und Tool-Policies.
 ### Voraussetzungen
 
 - Docker & Docker Compose
-- Python 3.10+ (für lokale Entwicklung)
-- LiteLLM (wird automatisch installiert)
+- Mindestens 4GB RAM
+- Mindestens 10GB freier Speicherplatz
+- Python 3.10+ (für lokale Entwicklung, optional)
 
 ### Docker Setup
 
 ```bash
 # Repository klonen
+git clone https://github.com/madetocreate/ai-shield.git
 cd ai-shield
 
 # .env Datei erstellen
 cp .env.example .env
 
-# Umgebungsvariablen setzen
-OPENAI_API_KEY=your-key
-LITELLM_MASTER_KEY=your-master-key
-CONTROL_PLANE_ADMIN_KEY=your-admin-key
+# Umgebungsvariablen setzen (siehe .env.example)
+nano .env
 
 # Services starten
 docker-compose up -d
+
+# Logs anzeigen
+docker-compose logs -f gateway
 ```
+
+### Erste Schritte
+
+1. **Gateway testen:**
+   ```bash
+   curl http://localhost:4050/health
+   ```
+
+2. **Control Plane testen:**
+   ```bash
+   curl http://localhost:4051/health
+   ```
+
+3. **Langfuse öffnen:**
+   ```bash
+   open http://localhost:3000
+   ```
+
+4. **Grafana öffnen:**
+   ```bash
+   open http://localhost:3001
+   ```
+
+**Detaillierte Dokumentation:** Siehe [SYSTEM_DOCUMENTATION.md](./SYSTEM_DOCUMENTATION.md)
 
 ### Lokale Entwicklung
 
@@ -142,8 +169,20 @@ uvicorn app.main:app --host 0.0.0.0 --port 8010
 
 ### Ports
 
-- **Gateway**: `4050` (konfigurierbar via `AI_SHIELD_HOST_PORT`)
-- **Control Plane**: `4051` (konfigurierbar via `CONTROL_PLANE_HOST_PORT`)
+| Service | Port | Beschreibung |
+|---------|------|--------------|
+| Gateway | `4050` | LiteLLM API Gateway |
+| Control Plane | `4051` | MCP Registry API |
+| Langfuse | `3000` | Observability UI |
+| Grafana | `3001` | Monitoring Dashboards |
+| Prometheus | `9090` | Metrics |
+| Jaeger | `16686` | Tracing UI |
+| Nginx | `80` | Reverse Proxy |
+| PostgreSQL (LiteLLM) | `5435` | LiteLLM Database |
+| PostgreSQL (Langfuse) | `5436` | Langfuse Database |
+| Redis | `6379` | Cache |
+
+Alle Ports sind konfigurierbar via Environment-Variablen (siehe `.env.example`).
 
 ---
 
@@ -508,8 +547,24 @@ Body:
 
 ## Weitere Informationen
 
+### Dokumentation
+
+- **[System-Dokumentation](./SYSTEM_DOCUMENTATION.md)** - Vollständige System-Dokumentation
+- **[Installationsvorschläge](./INSTALLATION_SUGGESTIONS.md)** - Erweiterungen und Verbesserungen
+
+### Externe Ressourcen
+
 - **LiteLLM Dokumentation**: https://docs.litellm.ai/
+- **Langfuse Dokumentation**: https://langfuse.com/docs
 - **MCP Protocol**: https://modelcontextprotocol.io/
+- **Presidio Dokumentation**: https://microsoft.github.io/presidio/
+- **OpenTelemetry**: https://opentelemetry.io/
+
+### Konfigurationsdateien
+
 - **Gateway Config**: `apps/gateway/config.yaml`
 - **Policy Presets**: `apps/gateway/policies/presets.yaml`
+- **OpenTelemetry**: `deploy/otel-collector.yaml`
+- **Nginx**: `deploy/nginx.conf`
+- **Prometheus**: `deploy/prometheus.yml`
 

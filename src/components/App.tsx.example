@@ -1,0 +1,29 @@
+/**
+ * App.tsx Example - Wie man alles integriert
+ * 
+ * Kopiere diese Integration in deine App.tsx
+ */
+
+import React from 'react';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { CommandPaletteProvider } from '@/components/command-palette/CommandPaletteProvider';
+import '@/styles/tokens.css'; // Wichtig: Design Tokens importieren!
+
+function App() {
+  return (
+    <ThemeProvider>
+      <CommandPaletteProvider>
+        {/* Deine App-Komponenten */}
+        {/* 
+          - MarketplaceDashboard
+          - AnalyticsDashboard
+          - IntegrationsDashboard
+          - RealtimeDashboard
+          - SettingsDashboard
+        */}
+      </CommandPaletteProvider>
+    </ThemeProvider>
+  );
+}
+
+export default App;

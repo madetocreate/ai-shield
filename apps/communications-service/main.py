@@ -1,0 +1,261 @@
+"""
+Communications Service - Backend-Service für SMS, Email, Phone, Chat
+
+Dieser Service stellt die API-Endpoints bereit, die die Agent-Integrationen erwarten.
+Er kommuniziert mit echten Services (Twilio, SendGrid, etc.).
+"""
+
+from fastapi import FastAPI, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, EmailStr
+from typing import Optional, Dict, Any
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Communications Service", version="1.0.0")
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Request Models
+class SendMessageRequest(BaseModel):
+    channel: str  # sms, email, phone, chat, website
+    recipient: str
+    message: str
+    account_id: str
+    user_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class SendMessageResponse(BaseModel):
+    success: bool
+    message_id: Optional[str] = None
+    error: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+# SMS Provider (Twilio)
+async def send_sms_via_twilio(to: str, message: str) -> Dict[str, Any]:
+    """Sendet SMS via Twilio"""
+    try:
+        from twilio.rest import Client
+        
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        from_number = os.getenv("TWILIO_PHONE_NUMBER")
+        
+        if not all([account_sid, auth_token, from_number]):
+            raise ValueError("Twilio credentials nicht konfiguriert")
+        
+        client = Client(account_sid, auth_token)
+        message = client.messages.create(
+            body=message,
+            from_=from_number,
+            to=to
+        )
+        
+        return {
+            "success": True,
+            "message_id": message.sid,
+            "status": message.status
+        }
+    except ImportError:
+        logger.warning("Twilio nicht installiert. Installiere: pip install twilio")
+        return {
+            "success": False,
+            "error": "Twilio nicht installiert"
+        }
+    except Exception as e:
+        logger.error(f"Twilio Fehler: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+# Email Provider (SendGrid)
+async def send_email_via_sendgrid(to: str, subject: str, message: str) -> Dict[str, Any]:
+    """Sendet Email via SendGrid"""
+    try:
+        import sendgrid
+        from sendgrid.helpers.mail import Mail
+        
+        api_key = os.getenv("SENDGRID_API_KEY")
+        from_email = os.getenv("SENDGRID_FROM_EMAIL", "noreply@example.com")
+        
+        if not api_key:
+            raise ValueError("SendGrid API Key nicht konfiguriert")
+        
+        sg = sendgrid.SendGridAPIClient(api_key=api_key)
+        mail = Mail(
+            from_email=from_email,
+            to_emails=to,
+            subject=subject,
+            plain_text_content=message
+        )
+        
+        response = sg.send(mail)
+        
+        return {
+            "success": True,
+            "message_id": str(response.headers.get("X-Message-Id", "")),
+            "status_code": response.status_code
+        }
+    except ImportError:
+        logger.warning("SendGrid nicht installiert. Installiere: pip install sendgrid")
+        return {
+            "success": False,
+            "error": "SendGrid nicht installiert"
+        }
+    except Exception as e:
+        logger.error(f"SendGrid Fehler: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+# Phone Provider (Twilio Voice)
+async def make_phone_call_via_twilio(to: str, message: str) -> Dict[str, Any]:
+    """Macht Phone Call via Twilio"""
+    try:
+        from twilio.rest import Client
+        
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        from_number = os.getenv("TWILIO_PHONE_NUMBER")
+        
+        if not all([account_sid, auth_token, from_number]):
+            raise ValueError("Twilio credentials nicht konfiguriert")
+        
+        client = Client(account_sid, auth_token)
+        # TODO: Implementiere Twilio Voice Call
+        # Für jetzt: Placeholder
+        return {
+            "success": False,
+            "error": "Phone calls noch nicht implementiert"
+        }
+    except Exception as e:
+        logger.error(f"Twilio Voice Fehler: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/v1/communications/send", response_model=SendMessageResponse)
+async def send_message(
+    request: SendMessageRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Sendet Nachricht über verschiedenen Channel
+    
+    Channels:
+    - sms: SMS via Twilio
+    - email: Email via SendGrid
+    - phone: Phone Call via Twilio Voice
+    - chat: Chat Message (WebSocket/HTTP)
+    - website: Website Widget Message
+    """
+    # API Key prüfen (optional)
+    api_key = os.getenv("COMMUNICATIONS_API_KEY")
+    if api_key and authorization != f"Bearer {api_key}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    try:
+        if request.channel == "sms":
+            result = await send_sms_via_twilio(
+                to=request.recipient,
+                message=request.message
+            )
+            if result["success"]:
+                return SendMessageResponse(
+                    success=True,
+                    message_id=result.get("message_id"),
+                    metadata=result
+                )
+            else:
+                return SendMessageResponse(
+                    success=False,
+                    error=result.get("error", "SMS senden fehlgeschlagen")
+                )
+        
+        elif request.channel == "email":
+            # Extrahiere Subject aus Metadata oder nutze Default
+            subject = request.metadata.get("subject", "Nachricht") if request.metadata else "Nachricht"
+            result = await send_email_via_sendgrid(
+                to=request.recipient,
+                subject=subject,
+                message=request.message
+            )
+            if result["success"]:
+                return SendMessageResponse(
+                    success=True,
+                    message_id=result.get("message_id"),
+                    metadata=result
+                )
+            else:
+                return SendMessageResponse(
+                    success=False,
+                    error=result.get("error", "Email senden fehlgeschlagen")
+                )
+        
+        elif request.channel == "phone":
+            result = await make_phone_call_via_twilio(
+                to=request.recipient,
+                message=request.message
+            )
+            if result["success"]:
+                return SendMessageResponse(
+                    success=True,
+                    message_id=result.get("message_id"),
+                    metadata=result
+                )
+            else:
+                return SendMessageResponse(
+                    success=False,
+                    error=result.get("error", "Phone call fehlgeschlagen")
+                )
+        
+        elif request.channel in ["chat", "website"]:
+            # Chat/Website Messages (können in Memory/DB gespeichert werden)
+            # Für jetzt: Placeholder
+            return SendMessageResponse(
+                success=True,
+                message_id=f"chat_{request.account_id}_{request.user_id}",
+                metadata={"channel": request.channel}
+            )
+        
+        else:
+            return SendMessageResponse(
+                success=False,
+                error=f"Unbekannter Channel: {request.channel}"
+            )
+    
+    except Exception as e:
+        logger.error(f"Fehler beim Senden: {e}")
+        return SendMessageResponse(
+            success=False,
+            error=str(e)
+        )
+
+
+@app.get("/health")
+async def health():
+    """Health Check"""
+    return {"status": "healthy"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)

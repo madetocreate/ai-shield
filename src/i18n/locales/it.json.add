@@ -1,0 +1,73 @@
+  "onboarding": {
+    "step": "Passo",
+    "of": "di",
+    "complete": "Completa",
+    "skip": "Salta",
+    "welcome": "Benvenuto in AI Shield!",
+    "welcomeDesc": "Ti mostreremo come usare il sistema.",
+    "steps": {
+      "welcome": {
+        "title": "Benvenuto!",
+        "description": "Benvenuto in AI Shield! Questo tour veloce ti mostrerà le funzionalità più importanti."
+      },
+      "marketplace": {
+        "title": "Marketplace degli Agenti",
+        "description": "Qui troverai tutti gli agenti disponibili. Puoi cercarli, installarli e gestirli.",
+        "action": "Vai al Marketplace"
+      },
+      "integrations": {
+        "title": "Integrazioni",
+        "description": "Collega servizi esterni come Google Calendar, Shopify o WhatsApp con AI Shield."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Analizza le prestazioni dei tuoi agenti, individua tendenze e crea report."
+      },
+      "settings": {
+        "title": "Impostazioni",
+        "description": "Personalizza lingua, tema e altre impostazioni secondo le tue preferenze."
+      }
+    }
+  },
+  "toast": {
+    "success": "Successo",
+    "error": "Errore",
+    "warning": "Avviso",
+    "info": "Info"
+  },
+  "aiHelp": {
+    "title": "Aiuto IA",
+    "openChat": "Apri aiuto",
+    "welcome": "Come posso aiutarti?",
+    "placeholder": "Fai una domanda...",
+    "didYouMean": "Intendevi: {{error}}?",
+    "checkConnection": "Verifica connessione",
+    "verifyCredentials": "Verifica credenziali",
+    "contactSupport": "Contatta supporto",
+    "installAgentHelp": "Per installare un agente, vai al Marketplace, seleziona un agente e clicca su 'Installa'.",
+    "errorHelp": "Se vedi un errore, controlla il messaggio di errore sopra. Spesso aiuta ricaricare la pagina o verificare la connessione.",
+    "integrationHelp": "Per connettere un'integrazione, vai a Integrazioni, seleziona un fornitore e clicca su 'Connetti'.",
+    "defaultHelp": "Posso aiutarti con domande su agenti, integrazioni, analytics e altro. Cosa vorresti sapere?",
+    "suggestionCheckLogs": "Controlla log",
+    "suggestionRestart": "Riavvia sistema"
+  },
+  "errors": {
+    "genericError": "Si è verificato un errore",
+    "networkError": "Problema di connessione",
+    "authError": "Errore di autenticazione",
+    "permissionError": "Errore di permesso",
+    "howToFix": "Come risolvere?",
+    "tryAgain": "Riprova",
+    "checkConnection": "Verifica connessione",
+    "checkInternet": "Verifica connessione Internet",
+    "checkFirewall": "Verifica impostazioni firewall",
+    "tryAgainLater": "Riprova più tardi",
+    "checkCredentials": "Verifica credenziali",
+    "reLogin": "Accedi di nuovo",
+    "contactSupport": "Contatta supporto",
+    "checkPermissions": "Verifica permessi",
+    "contactAdmin": "Contatta amministratore",
+    "upgradePlan": "Aggiorna piano",
+    "suggestions": "Suggerimenti",
+    "helpCenter": "Apri Centro Assistenza"
+  }
