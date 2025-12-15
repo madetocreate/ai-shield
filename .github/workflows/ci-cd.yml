@@ -1,0 +1,64 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd apps/agents
+        pip install -r requirements.txt
+    
+    - name: Run tests
+      run: |
+        cd apps/agents
+        python3 scripts/run_tests.py
+    
+    - name: Check production ready
+      run: |
+        cd apps/agents
+        python3 scripts/check_production_ready.py
+
+  deploy-staging:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to Staging
+      run: |
+        chmod +x deploy/deploy.sh
+        ./deploy/deploy.sh staging
+      env:
+        ENVIRONMENT: staging
+
+  deploy-production:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to Production
+      run: |
+        chmod +x deploy/deploy.sh
+        ./deploy/deploy.sh production
+      env:
+        ENVIRONMENT: production
