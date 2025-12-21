@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+__pycache__/
+*.py[cod]
+.vscode/
+.idea/
+node_modules/
+dist/
+build/
+apps/control-plane/data/*
+!apps/control-plane/data/.gitkeep

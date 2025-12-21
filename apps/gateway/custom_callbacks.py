@@ -211,13 +211,27 @@ class AIShieldCallback(CustomLogger):
                     continue
                 if auto_requires_allowlist:
                     sid = _server_id_from_tool(t)
-                    scfg = servers.get(sid) if sid and isinstance(servers, dict) else None
-                    if isinstance(scfg, dict):
-                        auto_ok = scfg.get("auto_approve_tools")
-                        if isinstance(auto_ok, list) and len(auto_ok) > 0:
-                            if any((not isinstance(x, str)) or (x not in auto_ok) for x in allowed_tools):
-                                t.pop("require_approval", None)
-                                continue
+                    # Fail-closed: require approval if server_id is missing
+                    if not sid:
+                        t.pop("require_approval", None)
+                        continue
+                    # Fail-closed: require approval if server config is missing
+                    if not isinstance(servers, dict):
+                        t.pop("require_approval", None)
+                        continue
+                    scfg = servers.get(sid)
+                    if not isinstance(scfg, dict):
+                        t.pop("require_approval", None)
+                        continue
+                    # Fail-closed: require approval if auto_approve_tools is missing or empty
+                    auto_ok = scfg.get("auto_approve_tools")
+                    if not isinstance(auto_ok, list) or len(auto_ok) == 0:
+                        t.pop("require_approval", None)
+                        continue
+                    # Only allow if all allowed_tools are in auto_approve_tools
+                    if any((not isinstance(x, str)) or (x not in auto_ok) for x in allowed_tools):
+                        t.pop("require_approval", None)
+                        continue
 
         return data
 

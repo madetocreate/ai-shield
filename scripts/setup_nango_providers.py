@@ -192,6 +192,45 @@ REAL_ESTATE_PROVIDERS = [
     },
 ]
 
+REVIEW_PROVIDERS = [
+    {
+        "provider_key": "trustpilot",
+        "auth_url": "https://authenticate.trustpilot.com/business-units-api/oauth2/business-users-for-applications/authorize",
+        "token_url": "https://authenticate.trustpilot.com/business-units-api/oauth2/business-users-for-applications/accesstoken",
+        "scopes": "reviews.read reviews.write invitations.write",
+        "name": "Trustpilot"
+    },
+    {
+        "provider_key": "tripadvisor",
+        "auth_url": "https://api.tripadvisor.com/oauth2/authorize",
+        "token_url": "https://api.tripadvisor.com/oauth2/token",
+        "scopes": "reviews.read reviews.write",
+        "name": "Tripadvisor"
+    },
+    {
+        "provider_key": "google-reviews",
+        "auth_url": "https://accounts.google.com/o/oauth2/v2/auth",
+        "token_url": "https://oauth2.googleapis.com/token",
+        "scopes": "https://www.googleapis.com/auth/business.manage",
+        "name": "Google Reviews"
+    },
+    {
+        "provider_key": "yelp",
+        "auth_url": "https://api.yelp.com/oauth2/authorize",
+        "token_url": "https://api.yelp.com/oauth2/token",
+        "scopes": "read write",
+        "name": "Yelp"
+    },
+    {
+        "provider_key": "facebook-reviews",
+        "auth_url": "https://www.facebook.com/v18.0/dialog/oauth",
+        "token_url": "https://graph.facebook.com/v18.0/oauth/access_token",
+        "scopes": "pages_read_engagement pages_manage_posts",
+        "name": "Facebook Reviews"
+    },
+]
+
+
 
 def check_provider_exists(provider_key: str) -> bool:
     """Check if provider already exists."""
@@ -304,43 +343,6 @@ def main():
         if create_provider(provider):
             health_success += 1
     
-REVIEW_PROVIDERS = [
-    {
-        "provider_key": "trustpilot",
-        "auth_url": "https://authenticate.trustpilot.com/business-units-api/oauth2/business-users-for-applications/authorize",
-        "token_url": "https://authenticate.trustpilot.com/business-units-api/oauth2/business-users-for-applications/accesstoken",
-        "scopes": "reviews.read reviews.write invitations.write",
-        "name": "Trustpilot"
-    },
-    {
-        "provider_key": "tripadvisor",
-        "auth_url": "https://api.tripadvisor.com/oauth2/authorize",
-        "token_url": "https://api.tripadvisor.com/oauth2/token",
-        "scopes": "reviews.read reviews.write",
-        "name": "Tripadvisor"
-    },
-    {
-        "provider_key": "google-reviews",
-        "auth_url": "https://accounts.google.com/o/oauth2/v2/auth",
-        "token_url": "https://oauth2.googleapis.com/token",
-        "scopes": "https://www.googleapis.com/auth/business.manage",
-        "name": "Google Reviews"
-    },
-    {
-        "provider_key": "yelp",
-        "auth_url": "https://api.yelp.com/oauth2/authorize",
-        "token_url": "https://api.yelp.com/oauth2/token",
-        "scopes": "read write",
-        "name": "Yelp"
-    },
-    {
-        "provider_key": "facebook-reviews",
-        "auth_url": "https://www.facebook.com/v18.0/dialog/oauth",
-        "token_url": "https://graph.facebook.com/v18.0/oauth/access_token",
-        "scopes": "pages_read_engagement pages_manage_posts",
-        "name": "Facebook Reviews"
-    },
-]
 
     print()
     print("📋 Review Platforms:")

@@ -1,0 +1,5 @@
+services:
+  langfuse:
+    image: ghcr.io/langfuse/langfuse:3
+  langfuse-worker:
+    image: ghcr.io/langfuse/langfuse-worker:3

@@ -1,0 +1,12 @@
+services:
+  gateway:
+    volumes:
+      - ./apps/gateway/config.ai_shield.yaml:/app/config.yaml:ro
+      - ./apps/gateway/custom_callbacks.py:/app/custom_callbacks.py:ro
+      - ./apps/gateway/policies:/app/policies:ro
+    environment:
+      PRESIDIO_ANALYZER_API_BASE: http://presidio-analyzer:3000
+      PRESIDIO_ANONYMIZER_API_BASE: http://presidio-anonymizer:3000
+    depends_on:
+      - presidio-analyzer
+      - presidio-anonymizer

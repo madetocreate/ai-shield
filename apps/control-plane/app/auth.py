@@ -4,7 +4,7 @@ Google OAuth, Apple Sign In, Email/Password Authentication
 """
 import os
 import jwt
-import hashlib
+import bcrypt
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Header, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, EmailStr
 import httpx
+from app.apple_verify import verify_apple_id_token
 
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
 
@@ -96,13 +97,20 @@ class UserInfo(BaseModel):
 
 # Helper Functions
 def hash_password(password: str) -> str:
-    """Hash password using SHA256 (in production, use bcrypt/argon2)."""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using bcrypt (secure, production-ready)."""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
 def verify_password(password: str, hashed: str) -> bool:
-    """Verify password."""
-    return hash_password(password) == hashed
+    """Verify password using bcrypt."""
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    except (ValueError, TypeError):
+        # Backward compatibility: Try SHA256 for old passwords (migration)
+        import hashlib
+        old_hash = hashlib.sha256(password.encode()).hexdigest()
+        return old_hash == hashed
 
 
 def create_jwt_token(user_id: str, email: str, refresh: bool = False) -> str:
@@ -229,30 +237,9 @@ async def verify_microsoft_token(code: str, redirect_uri: str) -> Dict[str, Any]
 
 # Apple Sign In
 async def verify_apple_token(id_token: str) -> Dict[str, Any]:
-    """Verify Apple ID token."""
-    if not APPLE_CLIENT_ID:
-        raise HTTPException(status_code=500, detail="Apple Sign In not configured")
-    
-    try:
-        # Decode Apple ID token (without verification for now)
-        # In production, verify with Apple's public keys
-        decoded = jwt.decode(id_token, options={"verify_signature": False})
-        
-        # Verify issuer
-        if decoded.get("iss") != "https://appleid.apple.com":
-            raise HTTPException(status_code=400, detail="Invalid Apple token issuer")
-        
-        # Verify audience
-        if decoded.get("aud") != APPLE_CLIENT_ID:
-            raise HTTPException(status_code=400, detail="Invalid Apple token audience")
-        
-        return {
-            "sub": decoded.get("sub"),  # Apple user ID
-            "email": decoded.get("email"),
-            "email_verified": decoded.get("email_verified", False),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid Apple token: {str(e)}")
+    """Verify Apple ID token with JWKS signature verification."""
+    # Use the new secure verification module
+    return await verify_apple_id_token(id_token)
 
 
 # API Endpoints

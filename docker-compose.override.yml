@@ -1,8 +1,5 @@
 services:
   control-plane:
-    build:
-      context: ./apps/control-plane
-      dockerfile: Dockerfile
     env_file:
       - ./.env
     environment:
@@ -13,11 +10,7 @@ services:
       MCP_SCAN_INTERVAL_SECONDS: ${MCP_SCAN_INTERVAL_SECONDS}
       MCP_AUTO_QUARANTINE: ${MCP_AUTO_QUARANTINE:-true}
     volumes:
-      - control_plane_data:/app/data
-    ports:
-      - "4051:8010"
+      - ./apps/control-plane/data:/app/data
     depends_on:
       - gateway
     restart: unless-stopped
-volumes:
-  control_plane_data:

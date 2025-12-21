@@ -31,6 +31,19 @@ RATE_LIMIT_WINDOW = 60  # seconds
 RATE_LIMIT_MAX_REQUESTS = 5
 
 
+def get_client_ip(request: Request) -> str:
+    """Extract client IP from request headers or connection."""
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.split(",")[0].strip()
+    xri = request.headers.get("x-real-ip")
+    if xri:
+        return xri.strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
+
+
 def check_rate_limit(identifier: str, endpoint: str) -> bool:
     """Simple rate limiting."""
     key = f"{identifier}:{endpoint}"
@@ -81,7 +94,7 @@ class UpdateProfileRequest(BaseModel):
 
 
 @enhanced_router.post("/refresh", response_model=Dict[str, Any])
-async def refresh_token(request: RefreshTokenRequest, client_ip: str = Depends(lambda: "unknown")):
+async def refresh_token(request: RefreshTokenRequest, client_ip: str = Depends(get_client_ip)):
     """Refresh access token using refresh token."""
     if not check_rate_limit(client_ip, "refresh"):
         raise HTTPException(status_code=429, detail="Too many requests")
@@ -140,7 +153,7 @@ async def logout(
 
 
 @enhanced_router.post("/password/reset/request")
-async def request_password_reset(request: PasswordResetRequest, client_ip: str = Depends(lambda: "unknown")):
+async def request_password_reset(request: PasswordResetRequest, client_ip: str = Depends(get_client_ip)):
     """Request password reset."""
     if not check_rate_limit(client_ip, "password_reset"):
         raise HTTPException(status_code=429, detail="Too many requests")
@@ -179,7 +192,7 @@ async def request_password_reset(request: PasswordResetRequest, client_ip: str =
 
 
 @enhanced_router.post("/password/reset/confirm")
-async def confirm_password_reset(request: PasswordResetConfirmRequest, client_ip: str = Depends(lambda: "unknown")):
+async def confirm_password_reset(request: PasswordResetConfirmRequest, client_ip: str = Depends(get_client_ip)):
     """Confirm password reset with token."""
     if not check_rate_limit(client_ip, "password_reset_confirm"):
         raise HTTPException(status_code=429, detail="Too many requests")

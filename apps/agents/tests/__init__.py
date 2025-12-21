@@ -1,3 +1,0 @@
-"""
-Tests für Branchen-Pakete
-"""

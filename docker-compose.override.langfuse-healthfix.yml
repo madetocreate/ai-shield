@@ -1,0 +1,14 @@
+services:
+  langfuse:
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://$$HOSTNAME:3000/api/public/ready?failIfDatabaseUnavailable=true > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+
+  langfuse-worker:
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://$$HOSTNAME:3030/api/health?failIfDatabaseUnavailable=true > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 60

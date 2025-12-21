@@ -4,12 +4,13 @@ Approval Requests API
 Endpoints für Approval Queue Management.
 """
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Header, Query
+from fastapi import APIRouter, HTTPException, Header, Query, Depends
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 import uuid
 
 from .types import ApprovalRequest, Provider
+from app.main import require_admin_key
 
 
 router = APIRouter(prefix="/v1/integrations/approvals", tags=["integrations", "approvals"])
@@ -37,7 +38,7 @@ class ApprovalRequestResponse(BaseModel):
 async def list_approval_requests(
     tenant_id: str = Query(..., description="Tenant ID"),
     status: Optional[str] = Query(None, description="Filter by status"),
-    x_ai_shield_admin_key: Optional[str] = Header(default=None)
+    _admin: bool = Depends(require_admin_key)
 ):
     """
     List approval requests for a tenant.
@@ -68,7 +69,7 @@ async def list_approval_requests(
 async def approve_request(
     request_id: str,
     tenant_id: str = Query(..., description="Tenant ID"),
-    x_ai_shield_admin_key: Optional[str] = Header(default=None)
+    _admin: bool = Depends(require_admin_key)
 ):
     """
     Approve and execute an approval request.
@@ -102,7 +103,7 @@ async def approve_request(
 async def reject_request(
     request_id: str,
     tenant_id: str = Query(..., description="Tenant ID"),
-    x_ai_shield_admin_key: Optional[str] = Header(default=None)
+    _admin: bool = Depends(require_admin_key)
 ):
     """
     Reject an approval request.

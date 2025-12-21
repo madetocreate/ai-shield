@@ -4,7 +4,7 @@ Integrations API Endpoints
 FastAPI Router für Integrations-Management.
 """
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Header, Query
+from fastapi import APIRouter, HTTPException, Header, Query, Depends
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 
@@ -12,6 +12,7 @@ from .types import Provider, Connection, ConnectionStatus, ApprovalRequest
 from .connectionsRepo import get_connections_repo
 from .policies import get_default_scopes
 from .nangoClient import get_nango_client
+from app.main import require_admin_key
 
 
 router = APIRouter(prefix="/v1/integrations", tags=["integrations"])
@@ -60,7 +61,7 @@ def _get_tenant_id(x_tenant_id: Optional[str] = Header(default=None)) -> str:
 @router.get("/", response_model=List[ConnectionResponse])
 async def list_connections(
     x_tenant_id: Optional[str] = Header(default=None),
-    x_ai_shield_admin_key: Optional[str] = Header(default=None)
+    _admin: bool = Depends(require_admin_key)
 ):
     """
     List all connections for a tenant.
@@ -89,7 +90,7 @@ async def list_connections(
 async def connect_provider(
     provider: str,
     request: ConnectRequest,
-    x_ai_shield_admin_key: Optional[str] = Header(default=None)
+    _admin: bool = Depends(require_admin_key)
 ):
     """
     Initiate OAuth connection for a provider.
@@ -152,7 +153,7 @@ async def connect_provider(
 async def disconnect_provider(
     provider: str,
     tenant_id: str = Query(..., description="Tenant ID"),
-    x_ai_shield_admin_key: Optional[str] = Header(default=None)
+    _admin: bool = Depends(require_admin_key)
 ):
     """
     Disconnect a provider.
@@ -181,7 +182,7 @@ async def disconnect_provider(
 async def get_connection_status(
     provider: str,
     tenant_id: str = Query(..., description="Tenant ID"),
-    x_ai_shield_admin_key: Optional[str] = Header(default=None)
+    _admin: bool = Depends(require_admin_key)
 ):
     """
     Get connection status for a provider.
@@ -213,7 +214,7 @@ async def oauth_callback(
     provider: str,
     connection_id: str = Query(..., description="Nango connection ID"),
     tenant_id: str = Query(..., description="Tenant ID"),
-    x_ai_shield_admin_key: Optional[str] = Header(default=None)
+    _admin: bool = Depends(require_admin_key)
 ):
     """
     OAuth callback endpoint (called by Nango after successful auth).

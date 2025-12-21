@@ -2,6 +2,7 @@ import os
 import json
 import re
 import hashlib
+import yaml
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -23,7 +24,7 @@ TOOL_CAT_WRITE = re.compile(r"(?i)\b(create|update|set|write|send|post|put|patch
 TOOL_POISON = re.compile(r"(?i)(ignore\s+previous|system\s+prompt|do\s+not\s+tell|exfiltrat|secret|apikey|token|credential)")
 
 class MCPServerIn(BaseModel):
-    server_id: str = Field(..., min_length=2, max_length=64)
+    server_id: str = Field(..., min_length=2, max_length=64, pattern="^[A-Za-z0-9][A-Za-z0-9_-]{1,63}$")
     url: str = Field(..., min_length=4, max_length=2048)
     transport: str = Field("streamable_http")
     auth_type: str = Field("none")
@@ -37,10 +38,18 @@ class MCPPinResult(BaseModel):
     pinned_at: str
 
 def _require_admin(x_ai_shield_admin_key: Optional[str]):
+    """Security: Require admin key for privileged operations."""
     if not ADMIN_KEY:
         raise HTTPException(status_code=500, detail="CONTROL_PLANE_ADMIN_KEY not set")
     if not x_ai_shield_admin_key or x_ai_shield_admin_key != ADMIN_KEY:
         raise HTTPException(status_code=401, detail="unauthorized")
+
+
+# Security: Dependency for admin key enforcement
+def require_admin_key(x_ai_shield_admin_key: Optional[str] = Header(default=None)):
+    """FastAPI dependency to enforce admin key on endpoints."""
+    _require_admin(x_ai_shield_admin_key)
+    return True
 
 def _load_registry() -> Dict[str, Any]:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -233,18 +242,19 @@ async def pin_server(server_id: str, x_ai_shield_admin_key: Optional[str] = Head
 def litellm_snippet(x_ai_shield_admin_key: Optional[str] = Header(default=None)):
     _require_admin(x_ai_shield_admin_key)
     reg = _load_registry()
-    lines: List[str] = []
-    lines.append("mcp_servers:")
+    mcp_servers: Dict[str, Any] = {}
+    
     for sid, s in reg["servers"].items():
-        lines.append(f"  {sid}:")
-        lines.append(f"    url: \"{s.get('url','')}\"")
-        lines.append(f"    transport: \"{s.get('transport','streamable_http')}\"")
-        lines.append(f"    auth_type: \"{s.get('auth_type','none')}\"")
+        server_config: Dict[str, Any] = {
+            "url": s.get("url", ""),
+            "transport": s.get("transport", "streamable_http"),
+            "auth_type": s.get("auth_type", "none"),
+        }
+        
         hdrs = s.get("headers") or {}
         if isinstance(hdrs, dict) and len(hdrs) > 0:
-            lines.append("    headers:")
-            for hk, hv in hdrs.items():
-                lines.append(f"      {hk}: \"{hv}\"")
+            server_config["headers"] = hdrs
+        
         cats = s.get("tool_categories") or {}
         preset = str(s.get("preset") or "read_only")
         if isinstance(cats, dict) and len(cats) > 0:
@@ -255,20 +265,21 @@ def litellm_snippet(x_ai_shield_admin_key: Optional[str] = Header(default=None))
                 allowed = [k for k, v in cats.items() if v != "dangerous"]
                 disallowed = [k for k, v in cats.items() if v == "dangerous"]
             if allowed:
-                lines.append("    allowed_tools:")
-                for t in sorted(allowed):
-                    lines.append(f"      - \"{t}\"")
+                server_config["allowed_tools"] = sorted(allowed)
             if disallowed:
-                lines.append("    disallowed_tools:")
-                for t in sorted(disallowed):
-                    lines.append(f"      - \"{t}\"")
+                server_config["disallowed_tools"] = sorted(disallowed)
+        
         ap = s.get("allowed_params") or {}
         if isinstance(ap, dict) and len(ap) > 0:
-            lines.append("    allowed_params:")
+            allowed_params: Dict[str, List[str]] = {}
             for tool_name, params in ap.items():
-                if not isinstance(params, list):
-                    continue
-                lines.append(f"      {tool_name}:")
-                for p in params:
-                    lines.append(f"        - \"{p}\"")
-    return {"yaml": "\n".join(lines) + "\n"}
+                if isinstance(params, list):
+                    allowed_params[tool_name] = params
+            if allowed_params:
+                server_config["allowed_params"] = allowed_params
+        
+        mcp_servers[sid] = server_config
+    
+    yaml_obj = {"mcp_servers": mcp_servers}
+    yaml_str = yaml.safe_dump(yaml_obj, sort_keys=False, allow_unicode=True)
+    return {"yaml": yaml_str}

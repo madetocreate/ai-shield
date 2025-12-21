@@ -1,0 +1,48 @@
+# Example nginx configuration with Basic Auth for internal services
+# 
+# Security: This file shows how to add Basic Auth to control-plane, langfuse, and grafana.
+# 
+# To use:
+# 1. Generate htpasswd file:
+#    docker run --rm httpd:2.4-alpine htpasswd -nbB admin 'your-password' > deploy/nginx.htpasswd
+# 2. Mount htpasswd in docker-compose.yml:
+#    volumes:
+#      - ./deploy/nginx.htpasswd:/etc/nginx/.htpasswd:ro
+# 3. Include this file in your nginx.conf or nginx.tls.conf
+#
+# Alternative: Use IP allowlist (see nginx-ip-whitelist.conf.example)
+
+# Basic Auth for Control Plane
+location / {
+    auth_basic "Control Plane - Restricted";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    
+    # Optional: IP allowlist (uncomment if needed)
+    # allow 10.0.0.0/8;
+    # allow 172.16.0.0/12;
+    # allow 192.168.0.0/16;
+    # deny all;
+    
+    limit_req zone=control_limit burst=10 nodelay;
+    proxy_pass http://control_plane;
+    # ... rest of proxy config
+}
+
+# Basic Auth for Langfuse
+location / {
+    auth_basic "Langfuse - Restricted";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    
+    proxy_pass http://langfuse;
+    # ... rest of proxy config
+}
+
+# Basic Auth for Grafana
+location / {
+    auth_basic "Grafana - Restricted";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    
+    proxy_pass http://grafana:3000;
+    # ... rest of proxy config
+}
+
