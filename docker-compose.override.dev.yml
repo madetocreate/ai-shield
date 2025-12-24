@@ -1,0 +1,76 @@
+# Development Override Configuration
+# 
+# Diese Datei setzt dev-friendly Defaults für lokale Entwicklung.
+# Verwendung: docker-compose -f docker-compose.yml -f docker-compose.override.dev.yml up -d
+#
+# Security: Ports sind nur auf 127.0.0.1 gebunden (nicht 0.0.0.0)
+# Defaults sind nur für lokale Entwicklung gedacht - niemals in Production verwenden!
+
+name: ai-shield
+
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev-postgres-password}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5435}:5432"
+
+  postgres-langfuse:
+    environment:
+      LANGFUSE_DB_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse}
+    ports:
+      - "127.0.0.1:${LANGFUSE_DB_PORT:-5436}:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+
+  langfuse:
+    environment:
+      LANGFUSE_DB_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse}
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-dev-langfuse-secret-change-in-production}
+      NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:3000}
+    ports:
+      - "127.0.0.1:${LANGFUSE_PORT:-3000}:3000"
+
+  presidio-analyzer:
+    ports:
+      - "127.0.0.1:${PRESIDIO_ANALYZER_HOST_PORT:-5001}:3000"
+
+  presidio-anonymizer:
+    ports:
+      - "127.0.0.1:${PRESIDIO_ANONYMIZER_HOST_PORT:-5002}:3000"
+
+  otel-collector:
+    ports:
+      - "127.0.0.1:${OTEL_GRPC_PORT:-4317}:4317"
+      - "127.0.0.1:${OTEL_HTTP_PORT:-4318}:4318"
+
+  gateway:
+    ports:
+      - "127.0.0.1:${AI_SHIELD_HOST_PORT:-4050}:4000"
+
+  control-plane:
+    ports:
+      - "127.0.0.1:${CONTROL_PLANE_HOST_PORT:-4051}:8010"
+
+  jaeger:
+    ports:
+      - "127.0.0.1:${JAEGER_UI_PORT:-16686}:16686"
+      - "127.0.0.1:${JAEGER_HTTP_PORT:-14318}:4318"
+
+  prometheus:
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+
+  grafana:
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3001}:3000"
+
+  nginx:
+    ports:
+      - "127.0.0.1:${NGINX_PORT:-80}:80"
+

@@ -1,7 +1,7 @@
 services:
   control-plane:
     env_file:
-      - ./.env
+      - ${BACKEND_ENV_PATH:-${HOME}/Documents/Backend-Secrets/backend.env}
     environment:
       CONTROL_PLANE_REGISTRY_PATH: /app/data/mcp_registry.json
       CONTROL_PLANE_ADMIN_KEY: ${CONTROL_PLANE_ADMIN_KEY}

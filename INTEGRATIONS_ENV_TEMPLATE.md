@@ -176,8 +176,8 @@ INTEGRATIONS_DEFAULT_SCOPES_FACEBOOK_REVIEWS=pages_read_engagement,pages_manage_
 ```bash
 # Nango Configuration
 NANGO_BASE_URL=http://127.0.0.1:3003
-NANGO_API_KEY=3mtDFIznwTU/qVFWSUYrZT/YoYbI9rbAc1xt51SIu6vJaZ7N
-NANGO_WEBHOOK_SECRET=-UjwsZdg9Pd3ErWdKmXAnyBRKCgWYwNvUx3Q41Qqeg8
+NANGO_API_KEY=<REDACTED>
+NANGO_WEBHOOK_SECRET=<REDACTED>
 
 # Integration Safety
 INTEGRATIONS_WRITE_REQUIRES_APPROVAL=1
@@ -201,3 +201,10 @@ INTEGRATIONS_DEFAULT_SCOPES_IMMOWELT=read
 - **Scopes**: Starten Sie mit `read`-only Scopes für Sicherheit
 - **Testing**: Verwenden Sie separate Test-Credentials für Entwicklung
 - **Production**: Verwenden Sie starke, eindeutige Secrets für Production
+
+## ⚠️ Security Notice
+
+**Wenn jemals echte API Keys oder Secrets in diesem Repository committed waren:**
+- Rotieren Sie diese Keys sofort im Nango Dashboard
+- Revoken Sie alte Keys und generieren Sie neue
+- Überprüfen Sie alle Logs auf unautorisierte Zugriffe

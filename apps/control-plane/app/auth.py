@@ -28,7 +28,28 @@ APPLE_CLIENT_ID = os.environ.get("APPLE_CLIENT_ID", "")
 APPLE_TEAM_ID = os.environ.get("APPLE_TEAM_ID", "")
 APPLE_KEY_ID = os.environ.get("APPLE_KEY_ID", "")
 APPLE_PRIVATE_KEY = os.environ.get("APPLE_PRIVATE_KEY", "")
-JWT_SECRET = os.environ.get("JWT_SECRET", secrets.token_urlsafe(32))
+
+# JWT_SECRET: Production must fail if missing, Dev can use fallback with warning
+APP_ENV = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "production")).lower()
+JWT_SECRET_ENV = os.environ.get("JWT_SECRET", "")
+
+if not JWT_SECRET_ENV:
+    if APP_ENV == "production":
+        import sys
+        print("ERROR: JWT_SECRET environment variable is required in production", file=sys.stderr)
+        sys.exit(1)
+    else:
+        # Dev-only fallback: generate insecure temporary secret
+        JWT_SECRET = secrets.token_urlsafe(32)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            "⚠️  DEV ONLY / INSECURE: JWT_SECRET not set, using dynamically generated secret. "
+            "This secret will change on every restart. Set JWT_SECRET in environment for stable tokens."
+        )
+else:
+    JWT_SECRET = JWT_SECRET_ENV
+
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
 

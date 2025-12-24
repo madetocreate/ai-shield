@@ -17,7 +17,10 @@ docker run --rm httpd:2.4-alpine htpasswd -nbB admin 'your-strong-password' > de
 htpasswd -cB deploy/nginx.htpasswd admin
 ```
 
-2. **In docker-compose.yml mounten:**
+**WICHTIG:** `deploy/nginx.htpasswd` ist in `.gitignore` und wird NICHT committet!
+Siehe `deploy/nginx.htpasswd.example` für ein Beispiel-Format.
+
+2. **In docker-compose.prod.yml mounten:**
 ```yaml
 services:
   nginx:
@@ -25,6 +28,9 @@ services:
       - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./deploy/nginx.htpasswd:/etc/nginx/.htpasswd:ro
 ```
+
+**Hinweis:** Das Volume-Mount ist bereits in `docker-compose.prod.yml` konfiguriert.
+Für Development: Füge das Volume-Mount manuell in `docker-compose.yml` hinzu, falls benötigt.
 
 3. **In nginx.conf aktivieren:**
 ```nginx

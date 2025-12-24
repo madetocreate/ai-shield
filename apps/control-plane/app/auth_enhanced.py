@@ -9,6 +9,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, EmailStr
 import secrets
 import jwt
+import os
+import hashlib
+import logging
 
 from .auth import (
     create_jwt_token,
@@ -21,6 +24,15 @@ from .auth import (
     verify_password as verify_password_func,
     JWT_EXPIRATION_HOURS,
 )
+
+# Logger für Security-Audit-Events
+logger = logging.getLogger(__name__)
+
+# Environment Variables
+APP_ENV = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "production")).lower()
+FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "http://localhost:3000")
+RESET_TOKEN_SALT = os.environ.get("RESET_TOKEN_SALT", secrets.token_urlsafe(32))
+AI_SHIELD_DEV_EXPOSE_RESET_TOKEN = os.environ.get("AI_SHIELD_DEV_EXPOSE_RESET_TOKEN", "false").lower() == "true"
 
 # Enhanced router
 enhanced_router = APIRouter(prefix="/v1/auth", tags=["auth"])
@@ -69,6 +81,18 @@ def check_rate_limit(identifier: str, endpoint: str) -> bool:
     
     store["count"] += 1
     return True
+
+
+def hash_reset_token(token: str) -> str:
+    """Hash reset token for secure storage (SHA256 with salt)."""
+    combined = f"{token}:{RESET_TOKEN_SALT}"
+    return hashlib.sha256(combined.encode("utf-8")).hexdigest()
+
+
+def verify_reset_token(token: str, stored_hash: str) -> bool:
+    """Verify reset token against stored hash."""
+    expected_hash = hash_reset_token(token)
+    return secrets.compare_digest(expected_hash, stored_hash)
 
 
 class RefreshTokenRequest(BaseModel):
@@ -167,28 +191,64 @@ async def request_password_reset(request: PasswordResetRequest, client_ip: str =
             user_id = uid
             break
     
+    # Security: Always return generic message (don't reveal if email exists)
+    generic_message = "If the email exists, a password reset link has been sent"
+    
     if not user:
-        # Don't reveal if email exists (security best practice)
-        return {"message": "If the email exists, a password reset link has been sent"}
+        # Log security event (without sensitive data)
+        if APP_ENV == "production":
+            logger.info(
+                "Password reset requested for unknown email",
+                extra={
+                    "event": "password_reset_requested",
+                    "email_exists": False,
+                    "client_ip": client_ip,
+                }
+            )
+        return {"message": generic_message}
     
     # Generate reset token
     reset_token = secrets.token_urlsafe(32)
-    password_reset_tokens[reset_token] = {
+    token_hash = hash_reset_token(reset_token)
+    
+    # Store hashed token (not plaintext)
+    password_reset_tokens[token_hash] = {
         "user_id": user_id,
         "email": request.email,
+        "token_plaintext": reset_token,  # Store plaintext temporarily for lookup (will be removed after use)
         "expires_at": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     
-    # In production, send email with reset link
-    # For now, we'll just return the token (remove in production!)
-    reset_link = f"http://localhost:3000/auth/reset-password?token={reset_token}"
+    # Security: Production mode - never expose token or reset_link in response
+    is_production = APP_ENV == "production"
     
-    return {
-        "message": "Password reset link sent",
-        "reset_link": reset_link,  # Remove in production!
-        "token": reset_token,  # Remove in production!
-    }
+    if is_production:
+        # Log security audit event (without token)
+        logger.info(
+            "Password reset token generated",
+            extra={
+                "event": "password_reset_token_generated",
+                "user_id": user_id,
+                "email": request.email,
+                "client_ip": client_ip,
+                "expires_at": password_reset_tokens[token_hash]["expires_at"],
+            }
+        )
+        # In production: Only return generic message
+        return {"message": generic_message}
+    
+    # Development mode: Only expose if explicitly enabled
+    if AI_SHIELD_DEV_EXPOSE_RESET_TOKEN:
+        reset_link = f"{FRONTEND_BASE_URL}/auth/reset-password?token={reset_token}"
+        return {
+            "message": "Password reset link sent",
+            "reset_link": reset_link,
+            "token": reset_token,
+        }
+    
+    # Dev default: Generic message (secure by default)
+    return {"message": generic_message}
 
 
 @enhanced_router.post("/password/reset/confirm")
@@ -197,15 +257,32 @@ async def confirm_password_reset(request: PasswordResetConfirmRequest, client_ip
     if not check_rate_limit(client_ip, "password_reset_confirm"):
         raise HTTPException(status_code=429, detail="Too many requests")
     
-    # Find reset token
-    if request.token not in password_reset_tokens:
+    # Find reset token by hashing the provided token and looking it up
+    token_hash = hash_reset_token(request.token)
+    
+    # Also check plaintext lookup (for backward compatibility during migration)
+    reset_data = None
+    token_key = None
+    
+    if token_hash in password_reset_tokens:
+        reset_data = password_reset_tokens[token_hash]
+        token_key = token_hash
+    else:
+        # Fallback: Check if token is stored as plaintext (migration period)
+        # This allows existing tokens to still work
+        for key, data in password_reset_tokens.items():
+            if data.get("token_plaintext") == request.token:
+                reset_data = data
+                token_key = key
+                break
+    
+    if not reset_data or not token_key:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
     
-    reset_data = password_reset_tokens[request.token]
     expires_at = datetime.fromisoformat(reset_data["expires_at"])
     
     if datetime.now(timezone.utc) > expires_at:
-        del password_reset_tokens[request.token]
+        del password_reset_tokens[token_key]
         raise HTTPException(status_code=400, detail="Reset token expired")
     
     user_id = reset_data["user_id"]
@@ -216,7 +293,18 @@ async def confirm_password_reset(request: PasswordResetConfirmRequest, client_ip
     users_db[user_id]["password_hash"] = hash_password(request.new_password)
     
     # Remove reset token
-    del password_reset_tokens[request.token]
+    del password_reset_tokens[token_key]
+    
+    # Log security event
+    if APP_ENV == "production":
+        logger.info(
+            "Password reset confirmed",
+            extra={
+                "event": "password_reset_confirmed",
+                "user_id": user_id,
+                "client_ip": client_ip,
+            }
+        )
     
     # Invalidate all refresh tokens for security
     tokens_to_remove = []

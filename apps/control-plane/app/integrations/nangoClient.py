@@ -2,20 +2,56 @@
 Nango HTTP Client Wrapper
 
 Wrapper für Nango API Calls. Aktuell nur Skeleton, später mit echten Credentials.
+
+ENV Variables (canonical):
+- NANGO_HOST: Nango instance URL (canonical)
+- NANGO_SECRET_KEY: Nango secret key (canonical)
+
+Deprecated (backward compatibility):
+- NANGO_BASE_URL: Alias for NANGO_HOST (with deprecation warning)
+- NANGO_API_KEY: Alias for NANGO_SECRET_KEY (with deprecation warning)
 """
 import os
+import warnings
 from typing import Any, Dict, Optional
 import httpx
 
+# Canonical ENV names (preferred)
+NANGO_HOST = os.environ.get("NANGO_HOST", "").rstrip("/")
+NANGO_SECRET_KEY = os.environ.get("NANGO_SECRET_KEY", "")
 
-NANGO_BASE_URL = os.environ.get("NANGO_BASE_URL", "http://127.0.0.1:3003").rstrip("/")
+# Deprecated ENV names (backward compatibility with warning)
+NANGO_BASE_URL = os.environ.get("NANGO_BASE_URL", "").rstrip("/")
 NANGO_API_KEY = os.environ.get("NANGO_API_KEY", "")
+
+# Use canonical names, fallback to deprecated with warning
+if not NANGO_HOST and NANGO_BASE_URL:
+    warnings.warn(
+        "NANGO_BASE_URL is deprecated. Please use NANGO_HOST instead. "
+        "NANGO_BASE_URL will be removed in a future version.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    NANGO_HOST = NANGO_BASE_URL
+
+if not NANGO_SECRET_KEY and NANGO_API_KEY:
+    warnings.warn(
+        "NANGO_API_KEY is deprecated. Please use NANGO_SECRET_KEY instead. "
+        "NANGO_API_KEY will be removed in a future version.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    NANGO_SECRET_KEY = NANGO_API_KEY
+
+# Default fallback for development
+if not NANGO_HOST:
+    NANGO_HOST = "http://127.0.0.1:3003"
 
 
 class NangoClient:
     """HTTP Client für Nango API."""
     
-    def __init__(self, base_url: str = NANGO_BASE_URL, api_key: str = NANGO_API_KEY):
+    def __init__(self, base_url: str = NANGO_HOST, api_key: str = NANGO_SECRET_KEY):
         self.base_url = base_url
         self.api_key = api_key
         self._client: Optional[httpx.AsyncClient] = None
@@ -44,7 +80,7 @@ class NangoClient:
         Returns connection info or raises exception if not found.
         """
         if not self.api_key:
-            raise ValueError("NANGO_API_KEY not configured")
+            raise ValueError("NANGO_SECRET_KEY (or deprecated NANGO_API_KEY) not configured")
         
         client = await self._get_client()
         url = f"/connection/{connection_id}"
@@ -67,7 +103,7 @@ class NangoClient:
         Returns access token string.
         """
         if not self.api_key:
-            raise ValueError("NANGO_API_KEY not configured")
+            raise ValueError("NANGO_SECRET_KEY (or deprecated NANGO_API_KEY) not configured")
         
         client = await self._get_client()
         url = f"/connection/{connection_id}"
@@ -102,7 +138,7 @@ class NangoClient:
             Response JSON
         """
         if not self.api_key:
-            raise ValueError("NANGO_API_KEY not configured")
+            raise ValueError("NANGO_SECRET_KEY (or deprecated NANGO_API_KEY) not configured")
         
         client = await self._get_client()
         url = f"/proxy/{endpoint}"

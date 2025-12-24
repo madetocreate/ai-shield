@@ -5,22 +5,34 @@ Dieser Service stellt die API-Endpoints bereit, die die Agent-Integrationen erwa
 Er kommuniziert mit echten Services (Twilio, SendGrid, etc.).
 """
 
+import os
+import logging
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict, Any
-import os
-import logging
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Communications Service", version="1.0.0")
 
-# CORS
+# CORS Configuration
+# Regel: Wenn allow_origins explizit gesetzt (nicht "*"), dann allow_credentials=True erlaubt
+# Wenn allow_origins=["*"], dann allow_credentials muss False sein (Browser-Constraint)
+ALLOWED_ORIGINS_ENV = os.getenv("ALLOWED_ORIGINS", "")
+if ALLOWED_ORIGINS_ENV:
+    # Parse CSV: "https://app.example.com,http://localhost:3000"
+    allowed_origins = [origin.strip() for origin in ALLOWED_ORIGINS_ENV.split(",") if origin.strip()]
+    allow_credentials = True
+else:
+    # Fallback: "*" aber dann credentials=False (Browser erlaubt "*" + credentials nicht)
+    allowed_origins = ["*"]
+    allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

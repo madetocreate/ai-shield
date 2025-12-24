@@ -1,0 +1,82 @@
+{
+  "test_cases": [
+    {
+      "name": "email_detection_block",
+      "input": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Please send an email to john.doe@example.com"
+          }
+        ],
+        "metadata": {
+          "ai_shield_preset": "healthcare_light",
+          "compatibility_mode": "block"
+        }
+      },
+      "expected": {
+        "decision": "block",
+        "reason_codes": ["email_detected"]
+      }
+    },
+    {
+      "name": "email_detection_mask",
+      "input": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Please send an email to john.doe@example.com"
+          }
+        ],
+        "metadata": {
+          "ai_shield_preset": "kmu_standard",
+          "compatibility_mode": "block"
+        }
+      },
+      "expected": {
+        "decision": "allow",
+        "reason_codes": [],
+        "has_sanitized": true
+      }
+    },
+    {
+      "name": "credit_card_detection",
+      "input": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "My credit card is 4532-1234-5678-9010"
+          }
+        ],
+        "metadata": {
+          "ai_shield_preset": "kmu_standard",
+          "compatibility_mode": "block"
+        }
+      },
+      "expected": {
+        "decision": "block",
+        "reason_codes": ["credit_card_detected"]
+      }
+    },
+    {
+      "name": "phone_detection",
+      "input": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Call me at +49 123 456789"
+          }
+        ],
+        "metadata": {
+          "ai_shield_preset": "healthcare_light",
+          "compatibility_mode": "block"
+        }
+      },
+      "expected": {
+        "decision": "block",
+        "reason_codes": ["phone_detected"]
+      }
+    }
+  ]
+}
+

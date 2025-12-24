@@ -89,6 +89,13 @@ async def verify_apple_id_token(id_token: str) -> Dict[str, Any]:
         kid = unverified_header.get("kid")
         alg = unverified_header.get("alg", "RS256")
         
+        # SECURITY: Reject tokens with non-RS256 algorithm (prevent algorithm confusion)
+        if alg != "RS256":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid Apple token algorithm: {alg}. Only RS256 is allowed."
+            )
+        
         if not kid:
             raise HTTPException(
                 status_code=400,
@@ -119,10 +126,11 @@ async def verify_apple_id_token(id_token: str) -> Dict[str, Any]:
             )
         
         # Verify token with signature, issuer, audience
+        # SECURITY: Hardcode algorithm to RS256 (do not trust header)
         decoded = jwt.decode(
             id_token,
             public_key,
-            algorithms=[alg],  # Typically RS256
+            algorithms=["RS256"],  # Hardcoded - not from header
             issuer=APPLE_ISSUER,
             audience=APPLE_CLIENT_ID,
             options={

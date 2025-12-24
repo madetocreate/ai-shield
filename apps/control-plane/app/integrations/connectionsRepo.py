@@ -1,8 +1,20 @@
 """
 Connections Repository
 
-In-memory storage für Connections (später DB-basiert).
-Aktuell nur Skeleton für Entwicklung.
+⚠️  WARNING: This is a STUB implementation for development/testing only.
+⚠️  DO NOT use this as the source of truth for production connections.
+
+Source of Truth:
+- Node-Backend stores Integration/Connection state (via Nango + DB)
+- AI-Shield control-plane manages Policies/Presets/Registry only
+- Connection state should be read from Node-Backend, not this stub
+
+This repository is:
+- In-memory only (not persisted)
+- Development/testing skeleton
+- NOT suitable for production use
+
+TODO: Remove or replace with read-only adapter that queries Node-Backend.
 """
 from typing import Dict, List, Optional
 from datetime import datetime, timezone
@@ -10,10 +22,17 @@ from .types import Connection, Provider, ConnectionStatus
 
 
 class ConnectionsRepository:
-    """In-memory repository für Connections (später DB)."""
+    """
+    In-memory repository für Connections (STUB - development only).
+    
+    ⚠️  WARNING: This is NOT the source of truth for connections.
+    Connection state is managed by Node-Backend (via Nango + DB).
+    This stub is for development/testing only.
+    """
     
     def __init__(self):
         # In-memory storage: {tenant_id: {provider: Connection}}
+        # ⚠️  WARNING: This is NOT persisted and NOT the source of truth
         self._storage: Dict[str, Dict[str, Connection]] = {}
     
     async def get_connection(
@@ -37,7 +56,22 @@ class ConnectionsRepository:
         self,
         connection: Connection
     ) -> Connection:
-        """Save or update connection."""
+        """
+        Save or update connection (STUB - development only).
+        
+        ⚠️  WARNING: This does NOT persist to production storage.
+        Connection state should be managed by Node-Backend.
+        This method is for development/testing only.
+        """
+        import warnings
+        warnings.warn(
+            "ConnectionsRepository.save_connection() is a STUB. "
+            "Connection state should be managed by Node-Backend, not AI-Shield control-plane. "
+            "This method is for development/testing only.",
+            UserWarning,
+            stacklevel=2
+        )
+        
         if connection.tenant_id not in self._storage:
             self._storage[connection.tenant_id] = {}
         

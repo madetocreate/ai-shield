@@ -3,6 +3,7 @@ import json
 import re
 import hashlib
 import yaml
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -151,10 +152,34 @@ app = FastAPI(
 )
 
 # CORS Middleware für Frontend-Zugriff
+# Konfigurierbar via CONTROL_PLANE_ALLOWED_ORIGINS (komma-separiert)
+# Default nur für Dev (localhost)
+ALLOWED_ORIGINS_ENV = os.environ.get("CONTROL_PLANE_ALLOWED_ORIGINS", "")
+APP_ENV = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "production")).lower()
+
+if ALLOWED_ORIGINS_ENV:
+    # Parse komma-separierte Liste
+    allowed_origins = [origin.strip() for origin in ALLOWED_ORIGINS_ENV.split(",") if origin.strip()]
+    allow_credentials = True
+elif APP_ENV == "production":
+    # Production: Kein Default, muss explizit gesetzt werden
+    allowed_origins = []
+    allow_credentials = True
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "⚠️  CONTROL_PLANE_ALLOWED_ORIGINS not set in production. CORS will block all origins. "
+        "Set CONTROL_PLANE_ALLOWED_ORIGINS to allow specific origins."
+    )
+else:
+    # Dev-only fallback: localhost
+    allowed_origins = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]
+    allow_credentials = True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

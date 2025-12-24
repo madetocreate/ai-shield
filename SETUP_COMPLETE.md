@@ -3,9 +3,11 @@
 ## Was wurde gemacht:
 
 ### 1. ✅ Nango API Key geholt
-- **Key gefunden**: `3mtDFIznwTU/qVFWSUYrZT/YoYbI9rbAc1xt51SIu6vJaZ7N` (dev environment)
-- **In .env eingetragen**: `NANGO_API_KEY=3mtDFIznwTU/qVFWSUYrZT/YoYbI9rbAc1xt51SIu6vJaZ7N`
-- **Webhook Secret generiert**: `-UjwsZdg9Pd3ErWdKmXAnyBRKCgWYwNvUx3Q41Qqeg8`
+- **Key gefunden**: `<REDACTED>` (dev environment)
+- **In .env eingetragen**: `NANGO_API_KEY=<REDACTED>`
+- **Webhook Secret generiert**: `<REDACTED>`
+
+**⚠️ Security Notice:** Falls echte Keys jemals in diesem Repository committed waren, rotieren Sie diese sofort im Nango Dashboard.
 
 ### 2. ✅ Backend konfiguriert
 - API Key in `.env` eingetragen

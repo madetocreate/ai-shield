@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Nango Provider Setup Script
-Configures all hotel and real estate providers in Nango via API
+Configures core providers in Nango via API
 """
 
 import os
@@ -15,56 +15,7 @@ NANGO_BASE_URL = os.environ.get("NANGO_BASE_URL", "http://127.0.0.1:3003")
 NANGO_API_KEY = os.environ.get("NANGO_API_KEY", "")
 
 # Provider configurations
-HOTEL_PROVIDERS = [
-    {
-        "provider_key": "booking-com",
-        "auth_url": "https://account.booking.com/oauth2/authorize",
-        "token_url": "https://account.booking.com/oauth2/token",
-        "scopes": "read write",
-        "name": "Booking.com"
-    },
-    {
-        "provider_key": "airbnb",
-        "auth_url": "https://www.airbnb.com/oauth2/authorize",
-        "token_url": "https://www.airbnb.com/oauth2/token",
-        "scopes": "read write",
-        "name": "Airbnb"
-    },
-    {
-        "provider_key": "expedia",
-        "auth_url": "https://api.expediapartnercentral.com/oauth2/authorize",
-        "token_url": "https://api.expediapartnercentral.com/oauth2/token",
-        "scopes": "read write",
-        "name": "Expedia"
-    },
-    {
-        "provider_key": "hrs",
-        "auth_url": "https://api.hrs.com/oauth2/authorize",
-        "token_url": "https://api.hrs.com/oauth2/token",
-        "scopes": "read write",
-        "name": "HRS"
-    },
-    {
-        "provider_key": "hotels-com",
-        "auth_url": "https://api.hotels.com/oauth2/authorize",
-        "token_url": "https://api.hotels.com/oauth2/token",
-        "scopes": "read write",
-        "name": "Hotels.com"
-    },
-    {
-        "provider_key": "trivago",
-        "auth_url": "https://api.trivago.com/oauth2/authorize",
-        "token_url": "https://api.trivago.com/oauth2/token",
-        "scopes": "read write",
-        "name": "Trivago"
-    },
-    {
-        "provider_key": "agoda",
-        "auth_url": "https://api.agoda.com/oauth2/authorize",
-        "token_url": "https://api.agoda.com/oauth2/token",
-        "scopes": "read write",
-        "name": "Agoda"
-    },
+BOOKING_PROVIDERS = [
     {
         "provider_key": "padel",
         "auth_url": "https://api.padel.com/oauth2/authorize",
@@ -74,7 +25,7 @@ HOTEL_PROVIDERS = [
     },
 ]
 
-HEALTH_PROVIDERS = [
+CORE_HEALTH_PROVIDERS = [
     {
         "provider_key": "microsoft-365",
         "auth_url": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
@@ -95,100 +46,6 @@ HEALTH_PROVIDERS = [
         "token_url": "https://auth.calendly.com/oauth/token",
         "scopes": "read",
         "name": "Calendly"
-    },
-    {
-        "provider_key": "doxy-me",
-        "auth_url": "https://doxy.me/oauth/authorize",
-        "token_url": "https://doxy.me/oauth/token",
-        "scopes": "read write",
-        "name": "Doxy.me"
-    },
-    {
-        "provider_key": "simplepractice",
-        "auth_url": "https://api.simplepractice.com/oauth/authorize",
-        "token_url": "https://api.simplepractice.com/oauth/token",
-        "scopes": "read write",
-        "name": "SimplePractice"
-    },
-    {
-        "provider_key": "jane-app",
-        "auth_url": "https://api.janeapp.com/oauth/authorize",
-        "token_url": "https://api.janeapp.com/oauth/token",
-        "scopes": "read write",
-        "name": "Jane App"
-    },
-    {
-        "provider_key": "epic-mychart",
-        "auth_url": "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize",
-        "token_url": "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
-        "scopes": "patient.read appointment.read appointment.write",
-        "name": "Epic MyChart"
-    },
-    {
-        "provider_key": "doctolib",
-        "auth_url": "https://www.doctolib.de/oauth/authorize",
-        "token_url": "https://www.doctolib.de/oauth/token",
-        "scopes": "read write",
-        "name": "Doctolib"
-    },
-]
-
-REAL_ESTATE_PROVIDERS = [
-    {
-        "provider_key": "immobilienscout24",
-        "auth_url": "https://api.immobilienscout24.de/oauth2/authorize",
-        "token_url": "https://api.immobilienscout24.de/oauth2/token",
-        "scopes": "read write publish",
-        "name": "Immobilienscout24"
-    },
-    {
-        "provider_key": "idealista",
-        "auth_url": "https://api.idealista.com/oauth/authorize",
-        "token_url": "https://api.idealista.com/oauth/token",
-        "scopes": "read write publish",
-        "name": "Idealista"
-    },
-    {
-        "provider_key": "immowelt",
-        "auth_url": "https://api.immowelt.de/oauth2/authorize",
-        "token_url": "https://api.immowelt.de/oauth2/token",
-        "scopes": "read write",
-        "name": "ImmoWelt"
-    },
-    {
-        "provider_key": "ebay-kleinanzeigen",
-        "auth_url": "https://api.ebay-kleinanzeigen.de/oauth2/authorize",
-        "token_url": "https://api.ebay-kleinanzeigen.de/oauth2/token",
-        "scopes": "read write publish",
-        "name": "eBay Kleinanzeigen"
-    },
-    {
-        "provider_key": "wohnung-de",
-        "auth_url": "https://api.wohnung.de/oauth2/authorize",
-        "token_url": "https://api.wohnung.de/oauth2/token",
-        "scopes": "read write",
-        "name": "Wohnung.de"
-    },
-    {
-        "provider_key": "immonet",
-        "auth_url": "https://api.immonet.de/oauth2/authorize",
-        "token_url": "https://api.immonet.de/oauth2/token",
-        "scopes": "read write",
-        "name": "Immonet"
-    },
-    {
-        "provider_key": "fotocasa",
-        "auth_url": "https://api.fotocasa.es/oauth2/authorize",
-        "token_url": "https://api.fotocasa.es/oauth2/token",
-        "scopes": "read write publish",
-        "name": "Fotocasa"
-    },
-    {
-        "provider_key": "habitaclia",
-        "auth_url": "https://api.habitaclia.com/oauth2/authorize",
-        "token_url": "https://api.habitaclia.com/oauth2/token",
-        "scopes": "read write publish",
-        "name": "Habitaclia"
     },
 ]
 
@@ -320,30 +177,21 @@ def main():
         print(f"❌ Cannot connect to Nango: {str(e)}")
         sys.exit(1)
     
-    print("📋 Hotel & Booking Platforms:")
+    print("📋 Booking Platforms:")
     print()
-    hotel_success = 0
-    for provider in HOTEL_PROVIDERS:
+    booking_success = 0
+    for provider in BOOKING_PROVIDERS:
         if create_provider(provider):
-            hotel_success += 1
+            booking_success += 1
     
     print()
-    print("📋 Real Estate Platforms:")
-    print()
-    realestate_success = 0
-    for provider in REAL_ESTATE_PROVIDERS:
-        if create_provider(provider):
-            realestate_success += 1
-    
-    print()
-    print("📋 Health & Practice Management Platforms:")
+    print("📋 Core Health & Calendar Platforms:")
     print()
     health_success = 0
-    for provider in HEALTH_PROVIDERS:
+    for provider in CORE_HEALTH_PROVIDERS:
         if create_provider(provider):
             health_success += 1
     
-
     print()
     print("📋 Review Platforms:")
     print()
@@ -355,9 +203,8 @@ def main():
     print()
     print("=" * 50)
     print(f"✅ Setup complete!")
-    print(f"   Hotel Providers: {hotel_success}/{len(HOTEL_PROVIDERS)}")
-    print(f"   Real Estate Providers: {realestate_success}/{len(REAL_ESTATE_PROVIDERS)}")
-    print(f"   Health Providers: {health_success}/{len(HEALTH_PROVIDERS)}")
+    print(f"   Booking Providers: {booking_success}/{len(BOOKING_PROVIDERS)}")
+    print(f"   Core Health Providers: {health_success}/{len(CORE_HEALTH_PROVIDERS)}")
     print(f"   Review Providers: {review_success}/{len(REVIEW_PROVIDERS)}")
     print()
     print("⚠️  IMPORTANT:")

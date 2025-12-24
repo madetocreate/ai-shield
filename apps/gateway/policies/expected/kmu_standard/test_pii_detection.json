@@ -1,0 +1,20 @@
+{
+  "test_cases": [
+    {
+      "name": "email_detection_mask",
+      "expected": {
+        "decision": "allow",
+        "reason_codes": [],
+        "has_sanitized": true
+      }
+    },
+    {
+      "name": "credit_card_detection",
+      "expected": {
+        "decision": "block",
+        "reason_codes": ["credit_card_detected"]
+      }
+    }
+  ]
+}
+

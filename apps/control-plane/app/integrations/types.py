@@ -20,35 +20,9 @@ class Provider(str, Enum):
     SLACK = "slack"
     WHATSAPP = "whatsapp"  # Meta/WhatsApp Business
     
-    # Hotel & Booking Platforms
-    BOOKING_COM = "booking-com"
-    AIRBNB = "airbnb"
-    EXPEDIA = "expedia"
-    HRS = "hrs"
-    HOTELS_COM = "hotels-com"
-    TRIVAGO = "trivago"
-    AGODA = "agoda"
+    # Booking Platforms
     PADEL = "padel"  # Padel (Spanien)
     
-    # Real Estate Platforms
-    IMMOBILIENSCOUT24 = "immobilienscout24"
-    IDEALISTA = "idealista"
-    IMMOWELT = "immowelt"
-    EBAY_KLEINANZEIGEN = "ebay-kleinanzeigen"
-    WOHNUNG_DE = "wohnung-de"
-    IMMONET = "immonet"
-    FOTOCASA = "fotocasa"  # Spanien
-    HABITACLIA = "habitaclia"  # Spanien
-    
-    # Health & Practice Management Platforms
-    MICROSOFT_365 = "microsoft-365"  # Outlook Calendar, Email
-    ZOOM = "zoom"  # Telemedizin, Video-Konsultationen
-    CALENDLY = "calendly"  # Terminbuchung
-    DOXY_ME = "doxy-me"  # Telemedizin
-    SIMPLEPRACTICE = "simplepractice"  # Practice Management
-    JANE_APP = "jane-app"  # Practice Management
-    EPIC_MYCHART = "epic-mychart"  # EHR Integration
-    DOCTOLIB = "doctolib"  # Terminbuchung (Europa)
     
     # Apple Services
     APPLE_SIGNIN = "apple-signin"  # Apple ID Authentication

@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY config.yaml /app/config.yaml
 COPY custom_callbacks.py /app/custom_callbacks.py
+COPY policy_engine.py /app/policy_engine.py
 COPY policies /app/policies
 COPY tools /app/tools
 

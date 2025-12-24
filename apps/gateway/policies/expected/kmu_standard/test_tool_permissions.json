@@ -1,0 +1,19 @@
+{
+  "test_cases": [
+    {
+      "name": "risky_tool_block",
+      "expected": {
+        "decision": "block",
+        "reason_codes": ["risky_tool_detected"]
+      }
+    },
+    {
+      "name": "safe_tool_allow",
+      "expected": {
+        "decision": "allow",
+        "reason_codes": []
+      }
+    }
+  ]
+}
+

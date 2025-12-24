@@ -31,6 +31,35 @@ AI Shield ist ein umfassendes Sicherheits-Gateway für LLM-Anwendungen, das folg
 
 ## Architektur
 
+### Routing-Übersicht
+
+AI Shield kann auf zwei Arten integriert werden:
+
+1. **Frontend → Control Plane**: Frontend-Applikationen können direkt mit dem Control Plane kommunizieren über `/api/shield/*` Proxy-Routen
+2. **Backend → Gateway**: Node/Python-Backends routen LLM-Requests über das Gateway (Port 4050)
+
+```
+Frontend (Next.js)
+    │
+    ├──► /api/shield/* → Control Plane (Port 4051)
+    │                     - MCP Registry
+    │                     - Tool Management
+    │
+    └──► /api/settings/ai-shield → Node Backend → DB
+
+Node Backend / Python Backend
+    │
+    └──► AI_SHIELD_ENABLED=true
+             │
+             └──► Gateway (Port 4050)
+                      │
+                      ├──► Policy Engine (policy_engine.py)
+                      ├──► Custom Callbacks
+                      └──► OpenAI / LLM Provider (upstream)
+```
+
+### Service-Architektur
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        Nginx (Port 80)                       │
@@ -637,6 +666,101 @@ docker-compose logs gateway | grep redis
 ```nginx
 limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
 # Ändere rate=10r/s zu höherem Wert
+```
+
+---
+
+## Routing-Integration
+
+### Frontend → Control Plane
+
+Frontend-Applikationen können über Proxy-Routen mit dem Control Plane kommunizieren:
+
+**Beispiel:** Next.js API Route
+```typescript
+// frontend/src/app/api/shield/[...path]/route.ts
+// Proxied zu: http://localhost:4051/{path}
+```
+
+**Verfügbare Endpoints:**
+- `GET /api/shield/health` - Health Check
+- `GET /api/shield/v1/mcp/registry` - MCP Server Registry
+- `POST /api/shield/v1/integrations/{name}/connect` - Integration Connect
+
+### Backend → Gateway (Node/Python)
+
+Backend-Services können LLM-Requests über das Gateway routen:
+
+#### Node Backend
+
+**Konfiguration** (`backend.env`):
+```bash
+AI_SHIELD_ENABLED=true
+AI_SHIELD_GATEWAY_BASE_URL=http://localhost:4050/v1
+AI_SHIELD_GATEWAY_KEY=sk-your-master-key
+```
+
+**OpenAI Client Routing:**
+- Wenn `AI_SHIELD_ENABLED=true`: Routet automatisch über Gateway
+- `baseURL` = `AI_SHIELD_GATEWAY_BASE_URL`
+- `apiKey` = `AI_SHIELD_GATEWAY_KEY` (Master Key für Gateway Auth)
+- Upstream OpenAI Key bleibt im Gateway (nicht im Backend)
+
+**Code:** `Backend/src/integrations/openai/client.ts`
+
+#### Python Backend
+
+**Konfiguration** (`backend.env`):
+```bash
+AI_SHIELD_ENABLED=true
+AI_SHIELD_GATEWAY_BASE_URL=http://localhost:4050/v1
+AI_SHIELD_GATEWAY_KEY=sk-your-master-key
+```
+
+**Provider Routing:**
+- `OpenAICompatibleProvider` prüft `AI_SHIELD_ENABLED`
+- Wenn enabled: Nutzt Gateway Base URL + Gateway Key
+- Wenn disabled: Nutzt `OPENAI_COMPATIBLE_BASE_URL` + `OPENAI_API_KEY`
+
+**Code:** `backend-agents/app/llm/providers/openai_compatible_provider.py`
+
+### Settings Persistierung
+
+**Frontend Settings:**
+- `GET /api/settings/ai-shield` - Lädt Settings aus Node Backend
+- `PUT /api/settings/ai-shield` - Speichert Settings in Node Backend DB
+
+**Node Backend:**
+- `GET /settings/ai-shield` - Lädt Tenant-spezifische Settings
+- `PUT /settings/ai-shield` - Speichert Settings (tenant_id aus Auth Context)
+
+**Schema:**
+```typescript
+{
+  enabled: boolean
+  control_plane_url: string | null
+  integrations_enabled: Record<string, boolean>
+  preset_selection: string | null
+}
+```
+
+### Testing
+
+**Health Checks:**
+```bash
+# AI Shield
+cd ai-shield && ./scripts/doctor.sh
+
+# Frontend
+cd frontend && ./scripts/shield-doctor.sh
+
+# Node Backend
+cd Backend && ./scripts/shield-doctor.sh
+```
+
+**Smoke Tests:**
+```bash
+cd ai-shield && ./scripts/smoke.sh
 ```
 
 ---

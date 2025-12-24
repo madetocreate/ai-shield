@@ -12,3 +12,4 @@ dist/
 build/
 apps/control-plane/data/*
 !apps/control-plane/data/.gitkeep
+deploy/nginx.htpasswd

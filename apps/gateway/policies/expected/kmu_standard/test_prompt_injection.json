@@ -1,0 +1,33 @@
+{
+  "test_cases": [
+    {
+      "name": "injection_ignore_instructions",
+      "expected": {
+        "decision": "block",
+        "reason_codes": ["prompt_injection_detected"]
+      }
+    },
+    {
+      "name": "injection_jailbreak",
+      "expected": {
+        "decision": "block",
+        "reason_codes": ["prompt_injection_detected"]
+      }
+    },
+    {
+      "name": "injection_observe_mode",
+      "expected": {
+        "decision": "allow",
+        "reason_codes": ["prompt_injection_detected"]
+      }
+    },
+    {
+      "name": "injection_warn_mode",
+      "expected": {
+        "decision": "warn",
+        "reason_codes": ["prompt_injection_detected"]
+      }
+    }
+  ]
+}
+

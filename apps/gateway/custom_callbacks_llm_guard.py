@@ -7,6 +7,7 @@ Aktivierung in config.yaml:
 """
 
 import os
+import logging
 from typing import Any, Dict, Optional
 
 try:
@@ -18,6 +19,9 @@ except ImportError:
 
 from litellm.integrations.custom_logger import CustomLogger
 from litellm.proxy.proxy_server import UserAPIKeyAuth, DualCache
+
+# Logger für strukturiertes Logging
+logger = logging.getLogger(__name__)
 
 if LLM_GUARD_AVAILABLE:
     input_scanner = PromptInjection()
@@ -89,9 +93,16 @@ class LLMGuardCallback(CustomLogger):
                     scan_result = output_scanner.scan(response_text)
                     if not scan_result.is_valid:
                         # Logge aber blockiere nicht (Post-Call)
-                        print(f"LLM Guard Output Warning: {scan_result.risky_value}")
-            except Exception:
-                pass
+                        logger.warning(
+                            "LLM Guard Output Warning",
+                            extra={
+                                "event": "llm_guard_output_warning",
+                                "risky_value": scan_result.risky_value,
+                                "is_valid": scan_result.is_valid,
+                            }
+                        )
+            except Exception as e:
+                logger.debug(f"LLM Guard output scan error: {e}", exc_info=True)
         
         return response
 
