@@ -32,7 +32,7 @@ async def pages_list(
         if database_id:
             # Query database
             result = await nango.proxy(
-                provider=Provider.NOTION.value,
+                provider_config_key=Provider.NOTION.value,
                 connection_id=connection.nango_connection_id,
                 method="POST",
                 endpoint=f"v1/databases/{database_id}/query",
@@ -43,7 +43,7 @@ async def pages_list(
         else:
             # List all pages
             result = await nango.proxy(
-                provider=Provider.NOTION.value,
+                provider_config_key=Provider.NOTION.value,
                 connection_id=connection.nango_connection_id,
                 method="GET",
                 endpoint="v1/search",
@@ -92,7 +92,7 @@ async def page_create(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.NOTION,
+            provider_config_key=Provider.NOTION,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -118,7 +118,7 @@ async def page_create(
         }
         
         result = await nango.proxy(
-            provider=Provider.NOTION.value,
+            provider_config_key=Provider.NOTION.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="v1/pages",

@@ -30,7 +30,7 @@ async def contacts_list(
     try:
         params = {"limit": limit}
         result = await nango.proxy(
-            provider=Provider.HUBSPOT.value,
+            provider_config_key=Provider.HUBSPOT.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="crm/v3/objects/contacts",
@@ -81,7 +81,7 @@ async def contact_create(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.HUBSPOT,
+            provider_config_key=Provider.HUBSPOT,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -109,7 +109,7 @@ async def contact_create(
             contact_data["properties"]["lastname"] = last_name
         
         result = await nango.proxy(
-            provider=Provider.HUBSPOT.value,
+            provider_config_key=Provider.HUBSPOT.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="crm/v3/objects/contacts",

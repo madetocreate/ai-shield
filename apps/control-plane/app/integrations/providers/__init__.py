@@ -11,7 +11,7 @@ from . import (
     padel,
     microsoft_365, zoom, calendly,
     apple_signin, icloud_calendar, icloud_drive, apple_push_notifications,
-    trustpilot, tripadvisor, google_reviews, yelp, facebook_reviews
+    trustpilot, google_reviews, yelp, facebook_reviews
 )
 
 __all__ = [
@@ -19,5 +19,5 @@ __all__ = [
     'padel',
     'microsoft_365', 'zoom', 'calendly',
     'apple_signin', 'icloud_calendar', 'icloud_drive', 'apple_push_notifications',
-    'trustpilot', 'tripadvisor', 'google_reviews', 'yelp', 'facebook_reviews'
+    'trustpilot', 'google_reviews', 'yelp', 'facebook_reviews'
 ]

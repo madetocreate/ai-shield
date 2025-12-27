@@ -151,7 +151,7 @@ POSTGRES_URL=postgresql://user:pass@postgres:5432/dbname
 ## 📖 Weitere Dokumentation
 
 - [System Documentation](docs/SYSTEM_DOCUMENTATION.md)
-- [Installation Suggestions](docs/INSTALLATION_SUGGESTIONS.md)
+- [Installation Suggestions](docs/security.md)
 - [Security](docs/security.md)
 
 ## 🤝 Contributing

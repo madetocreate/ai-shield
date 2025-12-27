@@ -48,7 +48,7 @@ async def send_notification(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.APPLE_PUSH_NOTIFICATIONS,
+            provider_config_key=Provider.APPLE_PUSH_NOTIFICATIONS,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -79,7 +79,7 @@ async def send_notification(
             notification_data.update(data)
         
         result = await nango.proxy(
-            provider=Provider.APPLE_PUSH_NOTIFICATIONS.value,
+            provider_config_key=Provider.APPLE_PUSH_NOTIFICATIONS.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint=f"3/device/{device_token}",
@@ -125,7 +125,7 @@ async def register_device(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.APPLE_PUSH_NOTIFICATIONS,
+            provider_config_key=Provider.APPLE_PUSH_NOTIFICATIONS,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -148,7 +148,7 @@ async def register_device(
             device_data["user_id"] = user_id
         
         result = await nango.proxy(
-            provider=Provider.APPLE_PUSH_NOTIFICATIONS.value,
+            provider_config_key=Provider.APPLE_PUSH_NOTIFICATIONS.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="devices",

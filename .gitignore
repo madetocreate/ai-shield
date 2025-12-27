@@ -13,3 +13,18 @@ build/
 apps/control-plane/data/*
 !apps/control-plane/data/.gitkeep
 deploy/nginx.htpasswd
+
+# Keys and Certificates (sicherheitskritisch)
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+!*.example.key
+!*.example.pem
+!*.example.crt
+deploy/certs/*.key
+deploy/certs/*.crt
+!deploy/certs/*.example.*

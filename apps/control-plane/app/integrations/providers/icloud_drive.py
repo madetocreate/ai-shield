@@ -33,7 +33,7 @@ async def files_list(
             params["folder_id"] = folder_id
         
         result = await nango.proxy(
-            provider=Provider.ICLOUD_DRIVE.value,
+            provider_config_key=Provider.ICLOUD_DRIVE.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="drive/v1/files",
@@ -80,7 +80,7 @@ async def file_upload(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.ICLOUD_DRIVE,
+            provider_config_key=Provider.ICLOUD_DRIVE,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -98,7 +98,7 @@ async def file_upload(
         # Note: File upload typically requires multipart/form-data
         # This is a simplified version - actual implementation may vary
         result = await nango.proxy(
-            provider=Provider.ICLOUD_DRIVE.value,
+            provider_config_key=Provider.ICLOUD_DRIVE.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="drive/v1/files",

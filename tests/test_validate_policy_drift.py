@@ -3,11 +3,6 @@ Tests für AI-Shield Policy Drift Validator.
 """
 from __future__ import annotations
 
-"""
-Tests für AI-Shield Policy Drift Validator.
-"""
-from __future__ import annotations
-
 import json
 import sys
 import tempfile

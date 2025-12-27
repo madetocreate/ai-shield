@@ -1,6 +1,17 @@
 """
 Authentication API Endpoints
 Google OAuth, Apple Sign In, Email/Password Authentication
+
+DEPRECATED FOR BETA:
+This Control-Plane auth module is NOT used for authentication in Closed Beta.
+The frontend now uses Node-Backend (Orchestrator) for all authentication flows.
+
+This module is kept for:
+- Legacy support (if needed)
+- Future migration path
+- Reference implementation
+
+For Beta: All auth should go through Node-Backend /auth/* endpoints.
 """
 import os
 import jwt

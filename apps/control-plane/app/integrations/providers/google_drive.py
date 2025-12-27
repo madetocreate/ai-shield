@@ -37,7 +37,7 @@ async def files_list(
             params["q"] = f"'{folder_id}' in parents"
         
         result = await nango.proxy(
-            provider=Provider.GOOGLE_DRIVE.value,
+            provider_config_key=Provider.GOOGLE_DRIVE.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="drive/v3/files",
@@ -89,7 +89,7 @@ async def file_upload(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.GOOGLE_DRIVE,
+            provider_config_key=Provider.GOOGLE_DRIVE,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,

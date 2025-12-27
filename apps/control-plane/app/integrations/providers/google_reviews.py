@@ -10,7 +10,7 @@ from ..nangoClient import get_nango_client
 async def read_reviews(tenant_id: str, connection_id: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Read reviews from Google My Business."""
     nango = get_nango_client()
-    access_token = await nango.get_access_token(tenant_id, "google-reviews", connection_id)
+    access_token = await nango.get_access_token(provider_config_key="google-reviews", connection_id=connection_id)
     
     location_id = params.get("location_id") if params else None
     if not location_id:
@@ -30,7 +30,7 @@ async def read_reviews(tenant_id: str, connection_id: str, params: Optional[Dict
 async def respond_to_review(tenant_id: str, connection_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     """Respond to a review on Google My Business."""
     nango = get_nango_client()
-    access_token = await nango.get_access_token(tenant_id, "google-reviews", connection_id)
+    access_token = await nango.get_access_token(provider_config_key="google-reviews", connection_id=connection_id)
     
     review_id = params.get("review_id")
     location_id = params.get("location_id")

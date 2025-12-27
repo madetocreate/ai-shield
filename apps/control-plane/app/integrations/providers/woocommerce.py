@@ -33,7 +33,7 @@ async def orders_get_status(
         params = {"per_page": limit} if not order_id else {}
         
         result = await nango.proxy(
-            provider=Provider.WOOCOMMERCE.value,
+            provider_config_key=Provider.WOOCOMMERCE.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint=endpoint,
@@ -83,7 +83,7 @@ async def customer_tag(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.WOOCOMMERCE,
+            provider_config_key=Provider.WOOCOMMERCE,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -102,7 +102,7 @@ async def customer_tag(
     try:
         # First get customer
         customer = await nango.proxy(
-            provider=Provider.WOOCOMMERCE.value,
+            provider_config_key=Provider.WOOCOMMERCE.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint=f"wp-json/wc/v3/customers/{customer_id}"
@@ -118,7 +118,7 @@ async def customer_tag(
         }
         
         result = await nango.proxy(
-            provider=Provider.WOOCOMMERCE.value,
+            provider_config_key=Provider.WOOCOMMERCE.value,
             connection_id=connection.nango_connection_id,
             method="PUT",
             endpoint=f"wp-json/wc/v3/customers/{customer_id}",

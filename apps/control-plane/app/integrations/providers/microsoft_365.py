@@ -39,7 +39,7 @@ async def calendar_list_events(
         endpoint = f"v1.0/me/calendars/{calendar_id or 'calendar'}/events" if calendar_id else "v1.0/me/events"
         
         result = await nango.proxy(
-            provider=Provider.MICROSOFT_365.value,
+            provider_config_key=Provider.MICROSOFT_365.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint=endpoint,
@@ -127,7 +127,7 @@ async def calendar_create_event(
         endpoint = f"v1.0/me/calendars/{calendar_id or 'calendar'}/events" if calendar_id else "v1.0/me/events"
         
         result = await nango.proxy(
-            provider=Provider.MICROSOFT_365.value,
+            provider_config_key=Provider.MICROSOFT_365.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint=endpoint,

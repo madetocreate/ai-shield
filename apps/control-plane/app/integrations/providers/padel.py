@@ -28,7 +28,7 @@ async def reservations_list(
             params["propertyId"] = property_id
         
         result = await nango.proxy(
-            provider=Provider.PADEL.value,
+            provider_config_key=Provider.PADEL.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="api/v1/reservations",
@@ -67,7 +67,7 @@ async def reservation_update(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.PADEL,
+            provider_config_key=Provider.PADEL,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -83,7 +83,7 @@ async def reservation_update(
     nango = get_nango_client()
     try:
         result = await nango.proxy(
-            provider=Provider.PADEL.value,
+            provider_config_key=Provider.PADEL.value,
             connection_id=connection.nango_connection_id,
             method="PATCH",
             endpoint=f"api/v1/reservations/{reservation_id}",

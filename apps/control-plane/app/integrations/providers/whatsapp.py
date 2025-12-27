@@ -44,7 +44,7 @@ async def messages_send(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.WHATSAPP,
+            provider_config_key=Provider.WHATSAPP,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -73,7 +73,7 @@ async def messages_send(
             message_data["image"] = {"link": media_url}
         
         result = await nango.proxy(
-            provider=Provider.WHATSAPP.value,
+            provider_config_key=Provider.WHATSAPP.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="v18.0/{phone-number-id}/messages",

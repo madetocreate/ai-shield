@@ -30,7 +30,7 @@ async def channels_list(
     try:
         params = {"limit": limit}
         result = await nango.proxy(
-            provider=Provider.SLACK.value,
+            provider_config_key=Provider.SLACK.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="conversations.list",
@@ -80,7 +80,7 @@ async def message_send(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.SLACK,
+            provider_config_key=Provider.SLACK,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -104,7 +104,7 @@ async def message_send(
             message_data["thread_ts"] = thread_ts
         
         result = await nango.proxy(
-            provider=Provider.SLACK.value,
+            provider_config_key=Provider.SLACK.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="chat.postMessage",

@@ -40,7 +40,7 @@ async def calendar_list_events(
         endpoint = f"calendars/{calendar_id or 'default'}/events" if calendar_id else "calendars/default/events"
         
         result = await nango.proxy(
-            provider=Provider.ICLOUD_CALENDAR.value,
+            provider_config_key=Provider.ICLOUD_CALENDAR.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint=endpoint,
@@ -93,7 +93,7 @@ async def calendar_create_event(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.ICLOUD_CALENDAR,
+            provider_config_key=Provider.ICLOUD_CALENDAR,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -121,7 +121,7 @@ async def calendar_create_event(
         endpoint = f"calendars/{calendar_id or 'default'}/events" if calendar_id else "calendars/default/events"
         
         result = await nango.proxy(
-            provider=Provider.ICLOUD_CALENDAR.value,
+            provider_config_key=Provider.ICLOUD_CALENDAR.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint=endpoint,

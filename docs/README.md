@@ -550,7 +550,7 @@ Body:
 ### Dokumentation
 
 - **[System-Dokumentation](./SYSTEM_DOCUMENTATION.md)** - Vollständige System-Dokumentation
-- **[Installationsvorschläge](./INSTALLATION_SUGGESTIONS.md)** - Erweiterungen und Verbesserungen
+- **[Sicherheit & Installation](./security.md)** - Erweiterungen und Verbesserungen
 
 ### Externe Ressourcen
 

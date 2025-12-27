@@ -3,56 +3,67 @@ Security tests for apple_verify.py algorithm confusion fix.
 """
 
 import pytest
+import sys
+from pathlib import Path
 from unittest.mock import Mock, patch, AsyncMock
 from fastapi import HTTPException
-from app.apple_verify import verify_apple_id_token
+
+# Add control-plane/app to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "app"))
+
+from apple_verify import verify_apple_id_token
 
 
 @pytest.mark.asyncio
 async def test_reject_non_rs256_algorithm():
     """Test that non-RS256 algorithms are rejected."""
     id_token = "dummy.token.signature"
+
+    # Mock APPLE_CLIENT_ID
+    with patch('app.apple_verify.APPLE_CLIENT_ID', 'test-client-id'):
+        # Mock unverified header with "none" algorithm (common attack vector)
+        with patch('app.apple_verify.jwt.get_unverified_header') as mock_header:
+            mock_header.return_value = {"kid": "test-kid", "alg": "none"}
     
-    # Mock unverified header with "none" algorithm (common attack vector)
-    with patch('app.apple_verify.jwt.get_unverified_header') as mock_header:
-        mock_header.return_value = {"kid": "test-kid", "alg": "none"}
-        
-        with pytest.raises(HTTPException) as exc_info:
-            await verify_apple_id_token(id_token)
-        
-        assert exc_info.value.status_code == 400
-        assert "Invalid Apple token algorithm" in exc_info.value.detail
-        assert "none" in exc_info.value.detail
+            with pytest.raises(HTTPException) as exc_info:
+                await verify_apple_id_token(id_token)
+    
+            assert exc_info.value.status_code == 400
+    assert "Invalid Apple token algorithm" in exc_info.value.detail
+    assert "none" in exc_info.value.detail
 
 
 @pytest.mark.asyncio
 async def test_reject_hs256_algorithm():
     """Test that HS256 algorithm is rejected (should be RS256)."""
     id_token = "dummy.token.signature"
+
+    # Mock APPLE_CLIENT_ID
+    with patch('app.apple_verify.APPLE_CLIENT_ID', 'test-client-id'):
+        with patch('app.apple_verify.jwt.get_unverified_header') as mock_header:
+            mock_header.return_value = {"kid": "test-kid", "alg": "HS256"}
     
-    with patch('app.apple_verify.jwt.get_unverified_header') as mock_header:
-        mock_header.return_value = {"kid": "test-kid", "alg": "HS256"}
-        
-        with pytest.raises(HTTPException) as exc_info:
-            await verify_apple_id_token(id_token)
-        
-        assert exc_info.value.status_code == 400
-        assert "Invalid Apple token algorithm" in exc_info.value.detail
-        assert "HS256" in exc_info.value.detail
+            with pytest.raises(HTTPException) as exc_info:
+                await verify_apple_id_token(id_token)
+    
+            assert exc_info.value.status_code == 400
+    assert "Invalid Apple token algorithm" in exc_info.value.detail
+    assert "HS256" in exc_info.value.detail
 
 
 @pytest.mark.asyncio
 async def test_accept_rs256_algorithm():
     """Test that RS256 algorithm is accepted."""
     id_token = "dummy.token.signature"
-    
+
     # Mock all dependencies
-    with patch('app.apple_verify.jwt.get_unverified_header') as mock_header, \
+    with patch('app.apple_verify.APPLE_CLIENT_ID', 'test-client-id'), \
+         patch('app.apple_verify.jwt.get_unverified_header') as mock_header, \
          patch('app.apple_verify.fetch_apple_jwks') as mock_fetch_jwks, \
          patch('app.apple_verify.get_key_from_jwks') as mock_get_key, \
-         patch('app.apple_verify.RSAAlgorithm') as mock_rsa, \
+         patch('jwt.algorithms.RSAAlgorithm') as mock_rsa, \
          patch('app.apple_verify.jwt.decode') as mock_decode:
-        
+
         # Setup mocks
         mock_header.return_value = {"kid": "test-kid", "alg": "RS256"}
         mock_fetch_jwks.return_value = {"keys": [{"kid": "test-kid"}]}
@@ -84,13 +95,14 @@ async def test_accept_rs256_algorithm():
 async def test_algorithm_hardcoded_not_from_header():
     """Test that algorithm is hardcoded to RS256, not taken from header."""
     id_token = "dummy.token.signature"
-    
-    with patch('app.apple_verify.jwt.get_unverified_header') as mock_header, \
+
+    with patch('app.apple_verify.APPLE_CLIENT_ID', 'test-client-id'), \
+         patch('app.apple_verify.jwt.get_unverified_header') as mock_header, \
          patch('app.apple_verify.fetch_apple_jwks') as mock_fetch_jwks, \
          patch('app.apple_verify.get_key_from_jwks') as mock_get_key, \
-         patch('app.apple_verify.RSAAlgorithm') as mock_rsa, \
+         patch('jwt.algorithms.RSAAlgorithm') as mock_rsa, \
          patch('app.apple_verify.jwt.decode') as mock_decode:
-        
+
         # Header says RS256 (valid)
         mock_header.return_value = {"kid": "test-kid", "alg": "RS256"}
         mock_fetch_jwks.return_value = {"keys": [{"kid": "test-kid"}]}
@@ -114,4 +126,3 @@ async def test_algorithm_hardcoded_not_from_header():
             # Ensure it's a list with only RS256, not dynamically from header
             assert len(call_kwargs["algorithms"]) == 1
             assert call_kwargs["algorithms"][0] == "RS256"
-

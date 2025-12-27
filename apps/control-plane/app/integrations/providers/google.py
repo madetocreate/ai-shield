@@ -42,7 +42,7 @@ async def calendar_find_slots(
             params["calendarId"] = calendar_id
         
         result = await nango.proxy(
-            provider=Provider.GOOGLE.value,
+            provider_config_key=Provider.GOOGLE.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="calendar/v3/freebusy",
@@ -99,7 +99,7 @@ async def calendar_create_event(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.GOOGLE,
+            provider_config_key=Provider.GOOGLE,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -127,7 +127,7 @@ async def calendar_create_event(
             event_data["attendees"] = [{"email": email} for email in attendees]
         
         result = await nango.proxy(
-            provider=Provider.GOOGLE.value,
+            provider_config_key=Provider.GOOGLE.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint=f"calendar/v3/calendars/{calendar_id or 'primary'}/events",

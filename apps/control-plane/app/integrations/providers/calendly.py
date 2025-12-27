@@ -36,7 +36,7 @@ async def events_list(
             params["invitee_email"] = invitee_email
         
         result = await nango.proxy(
-            provider=Provider.CALENDLY.value,
+            provider_config_key=Provider.CALENDLY.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="scheduled_events",
@@ -108,7 +108,7 @@ async def event_type_create(
             event_type_data["scheduling_url"] = scheduling_url
         
         result = await nango.proxy(
-            provider=Provider.CALENDLY.value,
+            provider_config_key=Provider.CALENDLY.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="event_types",

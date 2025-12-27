@@ -10,7 +10,7 @@ from ..nangoClient import get_nango_client
 async def read_reviews(tenant_id: str, connection_id: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Read reviews from Yelp."""
     nango = get_nango_client()
-    access_token = await nango.get_access_token(tenant_id, "yelp", connection_id)
+    access_token = await nango.get_access_token(provider_config_key="yelp", connection_id=connection_id)
     
     business_id = params.get("business_id") if params else None
     if not business_id:

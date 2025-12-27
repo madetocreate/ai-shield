@@ -73,14 +73,14 @@ services:
       retries: 5
 
   presidio-analyzer:
-    image: mcr.microsoft.com/presidio-analyzer:latest
+    image: mcr.microsoft.com/presidio-analyzer:2.2.33
     container_name: ai-shield-presidio-analyzer
     restart: unless-stopped
     ports:
       - "${PRESIDIO_ANALYZER_HOST_PORT:-5001}:3000"
 
   presidio-anonymizer:
-    image: mcr.microsoft.com/presidio-anonymizer:latest
+    image: mcr.microsoft.com/presidio-anonymizer:2.2.33
     container_name: ai-shield-presidio-anonymizer
     restart: unless-stopped
     ports:
@@ -196,7 +196,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./deploy/nginx.htpasswd:/etc/nginx/.htpasswd:ro
+      - ./deploy/nginx.htpasswd.example:/etc/nginx/.htpasswd:ro
     ports:
       - "${NGINX_PORT:-80}:80"
     depends_on:

@@ -72,18 +72,25 @@ class PolicyDecision:
 class PolicyEngine:
     """Zentrale Policy Engine für AI-Shield"""
     
-    def __init__(self, policies_path: Optional[str] = None, packs_path: Optional[str] = None):
+    def __init__(self, policies_path: Optional[str] = None, packs_path: Optional[str] = None, registry_path: Optional[str] = None):
         self.policies_path = policies_path or os.environ.get(
             "AI_SHIELD_POLICY_PATH", "/app/policies/presets.yaml"
         )
         self.packs_path = packs_path or os.environ.get(
             "AI_SHIELD_PACKS_PATH", "/app/policies/packs"
         )
+        # Registry path: consistent with custom_callbacks.py
+        self.registry_path = registry_path or os.environ.get(
+            "AI_SHIELD_REGISTRY_PATH", "/app/control-plane-data/mcp_registry.json"
+        )
         self._policies_cache: Optional[Dict[str, Any]] = None
         self._packs_cache: Dict[str, Dict[str, Any]] = {}
+        self._registry_cache: Optional[Dict[str, Any]] = None
         self._cache_ttl = 60
         self._cache_mtime: float = 0
         self._cache_loaded_at: float = 0
+        self._registry_mtime: float = 0
+        self._registry_loaded_at: float = 0
     
     def _load_policies(self) -> Dict[str, Any]:
         """Lade Policies mit Caching"""
@@ -136,6 +143,32 @@ class PolicyEngine:
             logger.error(f"Fehler beim Laden von Pack {pack_name}: {e}")
             return None
     
+    def _load_registry(self) -> Dict[str, Any]:
+        """Lade MCP Registry mit Caching"""
+        p = Path(self.registry_path)
+        if not p.exists():
+            logger.warning(f"MCP Registry nicht gefunden: {self.registry_path}")
+            return {}
+        
+        try:
+            current_mtime = p.stat().st_mtime
+            now = time.time()
+            
+            if (self._registry_cache is not None and
+                current_mtime == self._registry_mtime and
+                (now - self._registry_loaded_at) < self._cache_ttl):
+                return self._registry_cache
+            
+            import json
+            data = json.loads(p.read_text(encoding="utf-8") or "{}")
+            self._registry_cache = data
+            self._registry_mtime = current_mtime
+            self._registry_loaded_at = now
+            return data
+        except Exception as e:
+            logger.error(f"Fehler beim Laden der Registry: {e}", extra={"path": self.registry_path})
+            return {}
+    
     def _normalize_request(self, raw_request: Dict[str, Any]) -> PolicyRequest:
         """Normalize request: extract messages, tools, metadata"""
         messages = raw_request.get("messages", [])
@@ -170,6 +203,13 @@ class PolicyEngine:
         except ValueError:
             compat_mode = CompatibilityMode.BLOCK
         
+        # Harden MCP Auto-Approval: sanitize require_approval=never for unpinned servers
+        if tools:
+            registry = self._load_registry()
+            servers = registry.get("servers") or {}
+            tools = self._sanitize_mcp_auto_approval(tools, servers)
+            raw_request["tools"] = tools
+        
         return PolicyRequest(
             messages=messages,
             tools=tools,
@@ -179,6 +219,109 @@ class PolicyEngine:
             preset=preset,
             compatibility_mode=compat_mode,
         )
+    
+    def _sanitize_mcp_auto_approval(self, tools: List[Dict[str, Any]], servers: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Sanitize MCP auto-approval: remove require_approval=never for unpinned servers"""
+        sanitized = []
+        for tool in tools:
+            if not isinstance(tool, dict):
+                sanitized.append(tool)
+                continue
+            
+            # Only process MCP tools
+            if tool.get("type") != "mcp":
+                sanitized.append(tool)
+                continue
+            
+            # Check if require_approval=never is set
+            require_approval = str(tool.get("require_approval", "")).lower()
+            if require_approval != "never":
+                sanitized.append(tool)
+                continue
+            
+            # Extract server_id
+            server_id = None
+            for key in ("server_label", "server_id", "server_name", "server"):
+                val = tool.get(key)
+                if isinstance(val, str) and val.strip():
+                    server_id = val.strip()
+                    break
+            
+            if not server_id:
+                # No server_id -> remove require_approval=never
+                tool_copy = tool.copy()
+                tool_copy.pop("require_approval", None)
+                logger.warning(
+                    "AUTO_APPROVAL_DISABLED_REASON=no_server_id",
+                    extra={"correlation_id": tool.get("correlation_id")}
+                )
+                sanitized.append(tool_copy)
+                continue
+            
+            # Check if server exists in registry
+            server_config = servers.get(server_id) if isinstance(servers, dict) else None
+            if not isinstance(server_config, dict):
+                # Server not in registry -> remove require_approval=never
+                tool_copy = tool.copy()
+                tool_copy.pop("require_approval", None)
+                logger.warning(
+                    "AUTO_APPROVAL_DISABLED_REASON=server_not_in_registry",
+                    extra={"server_id": server_id, "correlation_id": tool.get("correlation_id")}
+                )
+                sanitized.append(tool_copy)
+                continue
+            
+            # Check if pinned_tools_hash exists (pinning is active)
+            pinned_tools_hash = server_config.get("pinned_tools_hash")
+            if not pinned_tools_hash:
+                # Unpinned server -> remove require_approval=never
+                tool_copy = tool.copy()
+                tool_copy.pop("require_approval", None)
+                logger.warning(
+                    "AUTO_APPROVAL_DISABLED_REASON=unpinned_server",
+                    extra={"server_id": server_id, "correlation_id": tool.get("correlation_id")}
+                )
+                sanitized.append(tool_copy)
+                continue
+            
+            # Check if allowed_tools are in auto_approve_tools
+            allowed_tools = tool.get("allowed_tools")
+            if not isinstance(allowed_tools, list) or len(allowed_tools) == 0:
+                tool_copy = tool.copy()
+                tool_copy.pop("require_approval", None)
+                logger.warning(
+                    "AUTO_APPROVAL_DISABLED_REASON=no_allowed_tools",
+                    extra={"server_id": server_id, "correlation_id": tool.get("correlation_id")}
+                )
+                sanitized.append(tool_copy)
+                continue
+            
+            auto_approve_tools = server_config.get("auto_approve_tools")
+            if not isinstance(auto_approve_tools, list) or len(auto_approve_tools) == 0:
+                tool_copy = tool.copy()
+                tool_copy.pop("require_approval", None)
+                logger.warning(
+                    "AUTO_APPROVAL_DISABLED_REASON=no_auto_approve_tools",
+                    extra={"server_id": server_id, "correlation_id": tool.get("correlation_id")}
+                )
+                sanitized.append(tool_copy)
+                continue
+            
+            # Check if all allowed_tools are in auto_approve_tools
+            if not all(str(t) in auto_approve_tools for t in allowed_tools):
+                tool_copy = tool.copy()
+                tool_copy.pop("require_approval", None)
+                logger.warning(
+                    "AUTO_APPROVAL_DISABLED_REASON=tools_not_in_auto_approve_list",
+                    extra={"server_id": server_id, "allowed_tools": allowed_tools, "correlation_id": tool.get("correlation_id")}
+                )
+                sanitized.append(tool_copy)
+                continue
+            
+            # All checks passed -> allow require_approval=never
+            sanitized.append(tool)
+        
+        return sanitized
     
     def _classify_request(self, request: PolicyRequest) -> Dict[str, Any]:
         """Classify request: extract text, detect PII, injection signals, etc."""

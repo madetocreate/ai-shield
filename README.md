@@ -80,7 +80,7 @@ Siehe `.env.example` für alle verfügbaren Variablen und Port-Konfigurationen.
 
 - **[System-Dokumentation](docs/SYSTEM_DOCUMENTATION.md)** - Vollständige System-Dokumentation
 - **[Benutzerhandbuch](docs/README.md)** - Feature-Dokumentation und API-Referenz
-- **[Installationsvorschläge](docs/INSTALLATION_SUGGESTIONS.md)** - Erweiterungen und Verbesserungen
+- **[Sicherheit & Installation](docs/security.md)** - Erweiterungen und Verbesserungen
 
 ## 🏗️ Architektur
 

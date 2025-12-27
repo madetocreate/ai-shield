@@ -34,7 +34,7 @@ async def tickets_list(
             params["status"] = status
         
         result = await nango.proxy(
-            provider=Provider.ZENDESK.value,
+            provider_config_key=Provider.ZENDESK.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="api/v2/tickets.json",
@@ -86,7 +86,7 @@ async def ticket_create(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.ZENDESK,
+            provider_config_key=Provider.ZENDESK,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -114,7 +114,7 @@ async def ticket_create(
             ticket_data["ticket"]["priority"] = priority
         
         result = await nango.proxy(
-            provider=Provider.ZENDESK.value,
+            provider_config_key=Provider.ZENDESK.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="api/v2/tickets.json",

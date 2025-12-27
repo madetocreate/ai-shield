@@ -10,7 +10,7 @@ from ..nangoClient import get_nango_client
 async def read_reviews(tenant_id: str, connection_id: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Read reviews from Trustpilot."""
     nango = get_nango_client()
-    access_token = await nango.get_access_token(tenant_id, "trustpilot", connection_id)
+    access_token = await nango.get_access_token(provider_config_key="trustpilot", connection_id=connection_id)
     
     business_unit_id = params.get("business_unit_id") if params else None
     if not business_unit_id:
@@ -30,7 +30,7 @@ async def read_reviews(tenant_id: str, connection_id: str, params: Optional[Dict
 async def create_invitation(tenant_id: str, connection_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     """Create review invitation via Trustpilot."""
     nango = get_nango_client()
-    access_token = await nango.get_access_token(tenant_id, "trustpilot", connection_id)
+    access_token = await nango.get_access_token(provider_config_key="trustpilot", connection_id=connection_id)
     
     business_unit_id = params.get("business_unit_id")
     if not business_unit_id:
@@ -58,7 +58,7 @@ async def create_invitation(tenant_id: str, connection_id: str, params: Dict[str
 async def respond_to_review(tenant_id: str, connection_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     """Respond to a review on Trustpilot."""
     nango = get_nango_client()
-    access_token = await nango.get_access_token(tenant_id, "trustpilot", connection_id)
+    access_token = await nango.get_access_token(provider_config_key="trustpilot", connection_id=connection_id)
     
     review_id = params.get("review_id")
     if not review_id:
@@ -82,7 +82,7 @@ async def respond_to_review(tenant_id: str, connection_id: str, params: Dict[str
 async def get_business_units(tenant_id: str, connection_id: str) -> Dict[str, Any]:
     """Get business units for the authenticated user."""
     nango = get_nango_client()
-    access_token = await nango.get_access_token(tenant_id, "trustpilot", connection_id)
+    access_token = await nango.get_access_token(provider_config_key="trustpilot", connection_id=connection_id)
     
     async with httpx.AsyncClient() as client:
         response = await client.get(

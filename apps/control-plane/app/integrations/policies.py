@@ -39,12 +39,32 @@ def requires_approval(operation: str) -> bool:
 
 def get_default_scopes(provider: Provider) -> list[str]:
     """Get default scopes for provider."""
-    scope_env_key = f"INTEGRATIONS_DEFAULT_SCOPES_{provider.value.upper()}"
+    # Use provider.name (ENV-safe) instead of provider.value.upper()
+    # provider.name is like "GOOGLE", "GOOGLE_DRIVE", "MICROSOFT_365"
+    scope_env_key = f"INTEGRATIONS_DEFAULT_SCOPES_{provider.name}"
     scopes_str = os.environ.get(scope_env_key, "")
     if scopes_str:
-        return [s.strip() for s in scopes_str.split(",") if s.strip()]
+        # Parse JSON array or comma-separated string
+        try:
+            import json
+            parsed = json.loads(scopes_str)
+            if isinstance(parsed, list):
+                return [str(s).strip() for s in parsed if s]
+        except (json.JSONDecodeError, ValueError):
+            pass
+        # Fallback: comma-separated string
+        scopes = [s.strip() for s in scopes_str.split(",") if s.strip()]
+        # Dedupe
+        seen = set()
+        result = []
+        for s in scopes:
+            if s not in seen:
+                seen.add(s)
+                result.append(s)
+        if result:
+            return result
     
-    # Fallback defaults
+    # Fallback defaults (only for providers that exist in Enum)
     defaults: Dict[Provider, list[str]] = {
         Provider.GOOGLE: ["calendar.readonly"],
         Provider.GOOGLE_DRIVE: ["drive.readonly"],
@@ -55,33 +75,12 @@ def get_default_scopes(provider: Provider) -> list[str]:
         Provider.NOTION: ["read"],
         Provider.SLACK: ["channels:read"],
         Provider.WHATSAPP: ["whatsapp_business_messaging"],
-        # Hotel & Booking Platforms
-        Provider.BOOKING_COM: ["read"],
-        Provider.AIRBNB: ["read"],
-        Provider.EXPEDIA: ["read"],
-        Provider.HRS: ["read"],
-        Provider.HOTELS_COM: ["read"],
-        Provider.TRIVAGO: ["read"],
-        Provider.AGODA: ["read"],
+        # Booking Platforms
         Provider.PADEL: ["read"],
-        # Real Estate Platforms
-        Provider.IMMOBILIENSCOUT24: ["read"],
-        Provider.IDEALISTA: ["read"],
-        Provider.IMMOWELT: ["read"],
-        Provider.EBAY_KLEINANZEIGEN: ["read"],
-        Provider.WOHNUNG_DE: ["read"],
-        Provider.IMMONET: ["read"],
-        Provider.FOTOCASA: ["read"],
-        Provider.HABITACLIA: ["read"],
-        # Health & Practice Management Platforms
+        # Calendar & Meeting Platforms
+        Provider.CALENDLY: ["read"],
         Provider.MICROSOFT_365: ["Calendars.Read", "Calendars.ReadWrite"],
         Provider.ZOOM: ["meeting:read", "meeting:write"],
-        Provider.CALENDLY: ["read"],
-        Provider.DOXY_ME: ["read"],
-        Provider.SIMPLEPRACTICE: ["read"],
-        Provider.JANE_APP: ["read"],
-        Provider.EPIC_MYCHART: ["patient.read", "appointment.read"],
-        Provider.DOCTOLIB: ["read"],
         # Apple Services
         Provider.APPLE_SIGNIN: ["name", "email"],
         Provider.ICLOUD_CALENDAR: ["calendars.read", "calendars.write"],
@@ -89,7 +88,6 @@ def get_default_scopes(provider: Provider) -> list[str]:
         Provider.APPLE_PUSH_NOTIFICATIONS: ["notifications.write"],
         # Review Platforms
         Provider.TRUSTPILOT: ["reviews.read", "reviews.write", "invitations.write"],
-        Provider.TRIPADVISOR: ["reviews.read", "reviews.write"],
         Provider.GOOGLE_REVIEWS: ["reviews.read", "reviews.write"],
         Provider.YELP: ["reviews.read"],
         Provider.FACEBOOK_REVIEWS: ["pages_read_engagement", "pages_manage_posts"],
@@ -122,6 +120,44 @@ def create_approval_request(
     )
 
 
+def _redact_value(value: Any) -> Any:
+    """Recursively redact sensitive values from objects."""
+    if isinstance(value, str):
+        # Redact strings matching token/secret patterns
+        import re
+        # Redact API keys (sk-, pk-, etc.)
+        if re.search(r'\b(sk|pk|ak|tk)-[a-zA-Z0-9]{20,}', value, re.IGNORECASE):
+            return "<REDACTED_API_KEY>"
+        # Redact bearer tokens
+        if re.search(r'\bbearer\s+[a-zA-Z0-9_-]{20,}', value, re.IGNORECASE):
+            return "<REDACTED_TOKEN>"
+        return value
+    elif isinstance(value, dict):
+        return {k: _redact_value(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [_redact_value(item) for item in value]
+    else:
+        return value
+
+
+def _redact_dict(obj: Dict[str, Any]) -> Dict[str, Any]:
+    """Redact sensitive keys from dictionary."""
+    import re
+    redacted = {}
+    sensitive_pattern = re.compile(
+        r'(token|secret|authorization|api[_-]?key|password|credential|auth)',
+        re.IGNORECASE
+    )
+    
+    for key, value in obj.items():
+        if sensitive_pattern.search(key):
+            redacted[key] = "<REDACTED>"
+        else:
+            redacted[key] = _redact_value(value)
+    
+    return redacted
+
+
 def log_operation(
     tenant_id: str,
     provider: Provider,
@@ -134,17 +170,34 @@ def log_operation(
     if not AUDIT_LOG_ENABLED:
         return
     
-    # TODO: Implement proper audit logging
-    # For now, just print (in production: use proper logging service)
+    # Redact sensitive data before logging
     import json
     from datetime import datetime, timezone
+    
+    # Redact parameters
+    redacted_params = _redact_dict(parameters) if isinstance(parameters, dict) else parameters
+    
+    # Redact result (if dict)
+    redacted_result = None
+    if result:
+        if isinstance(result, dict):
+            redacted_result = _redact_dict(result)
+        elif isinstance(result, str):
+            redacted_result = _redact_value(result)
+        else:
+            redacted_result = str(result)
+    
     log_entry = {
         "tenant_id": tenant_id,
         "provider": provider.value,
         "operation": operation,
-        "parameters": parameters,
-        "result": str(result) if result else None,
-        "error": error,
+        "parameters": redacted_params,
+        "result": redacted_result,
+        "error": error,  # Errors are usually safe to log
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
-    print(f"[AUDIT] {json.dumps(log_entry)}")
+    
+    # Use proper logging instead of print
+    import logging
+    logger = logging.getLogger("integrations.audit")
+    logger.info(f"[AUDIT] {json.dumps(log_entry)}")

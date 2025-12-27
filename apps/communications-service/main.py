@@ -16,18 +16,43 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Communications Service", version="1.0.0")
 
+# SECURITY: Fail-fast in production if SHIELD_API_KEY missing
+APP_ENV = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).lower()
+SHIELD_API_KEY = os.getenv("SHIELD_API_KEY", "")
+
+if APP_ENV == "production" and not SHIELD_API_KEY:
+    raise RuntimeError(
+        "SHIELD_API_KEY is required in production. "
+        "Set SHIELD_API_KEY environment variable before starting the service."
+    )
+
 # CORS Configuration
-# Regel: Wenn allow_origins explizit gesetzt (nicht "*"), dann allow_credentials=True erlaubt
-# Wenn allow_origins=["*"], dann allow_credentials muss False sein (Browser-Constraint)
+# SECURITY: Restrictive CORS - no "*" in production
 ALLOWED_ORIGINS_ENV = os.getenv("ALLOWED_ORIGINS", "")
+
 if ALLOWED_ORIGINS_ENV:
     # Parse CSV: "https://app.example.com,http://localhost:3000"
     allowed_origins = [origin.strip() for origin in ALLOWED_ORIGINS_ENV.split(",") if origin.strip()]
     allow_credentials = True
+elif APP_ENV == "production":
+    # Production: No "*" allowed - must set explicit origins
+    allowed_origins = []
+    allow_credentials = True
+    logger.warning(
+        "⚠️  ALLOWED_ORIGINS not set in production. CORS will block all origins. "
+        "Set ALLOWED_ORIGINS to allow specific origins."
+    )
 else:
-    # Fallback: "*" aber dann credentials=False (Browser erlaubt "*" + credentials nicht)
-    allowed_origins = ["*"]
-    allow_credentials = False
+    # Dev Default: localhost Origins only
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:8000",
+    ]
+    allow_credentials = True
 
 app.add_middleware(
     CORSMiddleware,

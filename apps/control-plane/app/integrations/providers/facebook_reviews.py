@@ -10,7 +10,7 @@ from ..nangoClient import get_nango_client
 async def read_reviews(tenant_id: str, connection_id: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Read reviews from Facebook."""
     nango = get_nango_client()
-    access_token = await nango.get_access_token(tenant_id, "facebook-reviews", connection_id)
+    access_token = await nango.get_access_token(provider_config_key="facebook-reviews", connection_id=connection_id)
     
     page_id = params.get("page_id") if params else None
     if not page_id:

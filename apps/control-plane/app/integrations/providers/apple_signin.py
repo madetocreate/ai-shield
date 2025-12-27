@@ -27,7 +27,7 @@ async def user_info(
     
     try:
         result = await nango.proxy(
-            provider=Provider.APPLE_SIGNIN.value,
+            provider_config_key=Provider.APPLE_SIGNIN.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint="v1/userinfo",

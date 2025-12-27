@@ -8,8 +8,9 @@ from .types import Provider
 from .providers import (
     google, google_drive, shopify, woocommerce, hubspot, zendesk, notion, slack, whatsapp,
     padel,
+    microsoft_365, zoom, calendly,
     apple_signin, icloud_calendar, icloud_drive, apple_push_notifications,
-    trustpilot, tripadvisor, google_reviews, yelp, facebook_reviews
+    trustpilot, google_reviews, yelp, facebook_reviews
 )
 
 # Note: Some providers may not be available in Nango by default
@@ -30,6 +31,10 @@ PROVIDER_MODULES: Dict[Provider, Any] = {
     Provider.WHATSAPP: whatsapp,
     # Booking Platforms
     Provider.PADEL: padel,
+    # Calendar & Meeting Platforms
+    Provider.CALENDLY: calendly,
+    Provider.MICROSOFT_365: microsoft_365,
+    Provider.ZOOM: zoom,
     # Apple Services
     Provider.APPLE_SIGNIN: apple_signin,
     Provider.ICLOUD_CALENDAR: icloud_calendar,
@@ -37,7 +42,6 @@ PROVIDER_MODULES: Dict[Provider, Any] = {
     Provider.APPLE_PUSH_NOTIFICATIONS: apple_push_notifications,
     # Review Platforms
     Provider.TRUSTPILOT: trustpilot,
-    Provider.TRIPADVISOR: tripadvisor,
     Provider.GOOGLE_REVIEWS: google_reviews,
     Provider.YELP: yelp,
     Provider.FACEBOOK_REVIEWS: facebook_reviews,

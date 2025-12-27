@@ -23,6 +23,10 @@ class Provider(str, Enum):
     # Booking Platforms
     PADEL = "padel"  # Padel (Spanien)
     
+    # Calendar & Meeting Platforms
+    CALENDLY = "calendly"  # Calendly
+    MICROSOFT_365 = "microsoft-365"  # Microsoft 365 / Outlook
+    ZOOM = "zoom"  # Zoom
     
     # Apple Services
     APPLE_SIGNIN = "apple-signin"  # Apple ID Authentication
@@ -32,7 +36,6 @@ class Provider(str, Enum):
     
     # Review Platforms
     TRUSTPILOT = "trustpilot"  # Trustpilot Reviews
-    TRIPADVISOR = "tripadvisor"  # Tripadvisor Reviews
     GOOGLE_REVIEWS = "google-reviews"  # Google My Business Reviews
     YELP = "yelp"  # Yelp Reviews
     FACEBOOK_REVIEWS = "facebook-reviews"  # Facebook Reviews

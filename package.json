@@ -1,0 +1,14 @@
+{
+  "name": "ai-shield",
+  "private": true,
+  "version": "0.0.0",
+  "description": "AI Shield monorepo root workspace",
+  "workspaces": [
+    "sdk/typescript"
+  ],
+  "scripts": {
+    "lint": "echo \"No lint configured\"",
+    "build": "echo \"No build configured\""
+  }
+}
+

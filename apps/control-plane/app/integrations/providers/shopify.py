@@ -33,7 +33,7 @@ async def orders_get_status(
         params = {"limit": limit} if not order_id else {}
         
         result = await nango.proxy(
-            provider=Provider.SHOPIFY.value,
+            provider_config_key=Provider.SHOPIFY.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint=endpoint,
@@ -86,7 +86,7 @@ async def draft_order_create(
         }
         approval_request = create_approval_request(
             tenant_id=tenant_id,
-            provider=Provider.SHOPIFY,
+            provider_config_key=Provider.SHOPIFY,
             connection_id=connection.nango_connection_id,
             operation=operation,
             parameters=parameters,
@@ -114,7 +114,7 @@ async def draft_order_create(
             draft_order_data["draft_order"]["note"] = note
         
         result = await nango.proxy(
-            provider=Provider.SHOPIFY.value,
+            provider_config_key=Provider.SHOPIFY.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="admin/api/2024-01/draft_orders.json",

@@ -39,7 +39,7 @@ async def meetings_list(
         endpoint = f"users/{user_id or 'me'}/meetings" if user_id else "users/me/meetings"
         
         result = await nango.proxy(
-            provider=Provider.ZOOM.value,
+            provider_config_key=Provider.ZOOM.value,
             connection_id=connection.nango_connection_id,
             method="GET",
             endpoint=endpoint,
@@ -115,7 +115,7 @@ async def meeting_create(
             meeting_data["settings"] = settings
         
         result = await nango.proxy(
-            provider=Provider.ZOOM.value,
+            provider_config_key=Provider.ZOOM.value,
             connection_id=connection.nango_connection_id,
             method="POST",
             endpoint="users/me/meetings",
