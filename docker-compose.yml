@@ -1,0 +1,212 @@
+name: ai-shield
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-shield-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: litellm
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_HOST_PORT:-5435}:5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  postgres-langfuse:
+    image: postgres:16-alpine
+    container_name: ai-shield-postgres-langfuse
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD:?LANGFUSE_DB_PASSWORD is required}
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_data:/var/lib/postgresql/data
+    ports:
+      - "${LANGFUSE_DB_PORT:-5436}:5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U langfuse -d langfuse"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7.4.7-alpine
+    container_name: ai-shield-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${AI_SHIELD_REDIS_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD","redis-cli","ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  langfuse:
+    image: langfuse/langfuse:2.50.0
+    container_name: ai-shield-langfuse
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD:?LANGFUSE_DB_PASSWORD is required}@postgres-langfuse:5432/langfuse
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:?LANGFUSE_SECRET is required}
+      NEXTAUTH_URL: ${LANGFUSE_URL:?LANGFUSE_URL is required}
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "true"
+    ports:
+      - "${LANGFUSE_PORT:-3000}:3000"
+    depends_on:
+      postgres-langfuse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD","wget","--quiet","--tries=1","--spider","http://localhost:3000/api/public/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:2.2.33
+    container_name: ai-shield-presidio-analyzer
+    restart: unless-stopped
+    ports:
+      - "${PRESIDIO_ANALYZER_HOST_PORT:-5001}:3000"
+
+  presidio-anonymizer:
+    image: mcr.microsoft.com/presidio-anonymizer:2.2.33
+    container_name: ai-shield-presidio-anonymizer
+    restart: unless-stopped
+    ports:
+      - "${PRESIDIO_ANONYMIZER_HOST_PORT:-5002}:3000"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.103.0
+    container_name: ai-shield-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./deploy/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+
+  gateway:
+    image: ghcr.io/berriai/litellm-database:main-v1.80.8-stable
+    container_name: ai-shield-gateway
+    restart: unless-stopped
+    env_file:
+      - ${BACKEND_ENV_PATH:-${HOME}/Documents/Backend-Secrets/backend.env}
+    environment:
+      PYTHONPATH: /app
+      USE_PRISMA_MIGRATE: "True"
+      LITELLM_LOG: INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      presidio-analyzer:
+        condition: service_started
+      presidio-anonymizer:
+        condition: service_started
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      langfuse:
+        condition: service_healthy
+    ports:
+      - "${AI_SHIELD_HOST_PORT:-4050}:4000"
+    volumes:
+      - ./apps/gateway/config.yaml:/app/config.yaml:ro
+      - ./apps/gateway/custom_callbacks.py:/app/custom_callbacks.py:ro
+      - ./apps/gateway/policy_engine.py:/app/policy_engine.py:ro
+      - ./apps/gateway/policies:/app/policies:ro
+      - ./apps/control-plane/data:/app/control-plane-data:ro
+    command: ["--config","/app/config.yaml","--port","4000","--host","0.0.0.0"]
+
+  control-plane:
+    build:
+      context: ./apps/control-plane
+    container_name: ai-shield-control-plane
+    restart: unless-stopped
+    env_file:
+      - ${BACKEND_ENV_PATH:-${HOME}/Documents/Backend-Secrets/backend.env}
+    depends_on:
+      - gateway
+    ports:
+      - "${CONTROL_PLANE_HOST_PORT:-4051}:8010"
+    volumes:
+      - ./apps/control-plane/data:/app/data
+    command: ["uvicorn","app.main:app","--host","0.0.0.0","--port","8010"]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    container_name: ai-shield-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"
+      # - "${JAEGER_GRPC_PORT:-4317}:4317"  # Intern only
+      - "${JAEGER_HTTP_PORT:-14318}:4318"  # Default 14318 to avoid collision with OTEL_HTTP_PORT
+    depends_on:
+      - otel-collector
+
+  prometheus:
+    image: prom/prometheus:v3.8.1
+    container_name: ai-shield-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    container_name: ai-shield-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?GRAFANA_ADMIN_USER is required}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+
+  nginx:
+    image: nginx:1.28.0-alpine
+    container_name: ai-shield-nginx
+    restart: unless-stopped
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx.htpasswd.example:/etc/nginx/.htpasswd:ro
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    depends_on:
+      - gateway
+      - control-plane
+      - langfuse
+
+volumes:
+  postgres_data:
+  langfuse_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:

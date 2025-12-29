@@ -1,0 +1,16 @@
+services:
+  control-plane:
+    env_file:
+      - ${BACKEND_ENV_PATH:-${HOME}/Documents/Backend-Secrets/backend.env}
+    environment:
+      CONTROL_PLANE_REGISTRY_PATH: /app/data/mcp_registry.json
+      CONTROL_PLANE_ADMIN_KEY: ${CONTROL_PLANE_ADMIN_KEY}
+      GATEWAY_BASE_URL: http://gateway:4000
+      GATEWAY_ADMIN_KEY: ${LITELLM_MASTER_KEY}
+      MCP_SCAN_INTERVAL_SECONDS: ${MCP_SCAN_INTERVAL_SECONDS}
+      MCP_AUTO_QUARANTINE: ${MCP_AUTO_QUARANTINE:-true}
+    volumes:
+      - ./apps/control-plane/data:/app/data
+    depends_on:
+      - gateway
+    restart: unless-stopped

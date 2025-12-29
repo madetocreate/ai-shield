@@ -1,0 +1,22 @@
+services:
+  minio:
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  minio-init:
+    env_file:
+      - ${BACKEND_ENV_PATH:-${HOME}/Documents/Backend-Secrets/backend.env}
+    entrypoint: ["/bin/sh","-lc"]
+    command: |
+      i=0
+      until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER:-minio}" "$$MINIO_ROOT_PASSWORD"; do
+        i=$$((i+1))
+        if [ "$$i" -gt 60 ]; then exit 1; fi
+        sleep 2
+      done
+      mc mb -p "local/$${LANGFUSE_S3_EVENT_UPLOAD_BUCKET:-langfuse}" || true
+      mc mb -p "local/$${LANGFUSE_S3_MEDIA_UPLOAD_BUCKET:-langfuse-media}" || true
+      exit 0

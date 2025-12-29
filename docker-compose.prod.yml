@@ -1,0 +1,87 @@
+# Production Docker Compose Configuration
+# 
+# Unterschied zu docker-compose.yml (Dev):
+# - Nur nginx published Ports (80/443), gateway/control-plane nur internal
+# - Images pinned für Stabilität
+# - Langfuse major version pin statt latest
+#
+# Verwendung:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Was geändert: Gateway/Control-Plane ohne host ports, Images gepinnt
+# Warum: Prod-Sicherheit - Rate Limits/Shields nicht umgehbar, stabile Versionen
+# Rollback: docker-compose.yml ohne -f docker-compose.prod.yml verwenden
+
+name: ai-shield
+
+services:
+  # Pinned images for production stability
+  redis:
+    image: redis:7.4.7-alpine
+    # Internal only in production
+    ports: []
+  
+  nginx:
+    image: nginx:1.28.0-alpine
+    # Only nginx ports are published (entry point)
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx.htpasswd:/etc/nginx/.htpasswd:ro
+    # No changes to depends_on - keep from base
+  
+  prometheus:
+    image: prom/prometheus:v3.8.1
+  
+  grafana:
+    image: grafana/grafana:11.6.0
+  
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+  
+  # Langfuse: pin to major version
+  # Check langfuse/langfuse tags for latest stable version
+  langfuse:
+    image: langfuse/langfuse:3.59.0  # Update to latest stable when needed
+    # Remove published port in prod - access via nginx only
+    ports: []
+  
+  # Gateway: No published ports - access via nginx only
+  gateway:
+    image: ghcr.io/berriai/litellm-database:main-v1.80.8-stable
+    # Remove published port - internal network only
+    ports: []
+    env_file:
+      - ${BACKEND_ENV_PATH:-${HOME}/Documents/Backend-Secrets/backend.env}
+  
+  # Control-Plane: No published ports - access via nginx only
+  control-plane:
+    # Build remains - but no published ports
+    ports: []
+    env_file:
+      - ${BACKEND_ENV_PATH:-${HOME}/Documents/Backend-Secrets/backend.env}
+  
+  # OTEL Collector: Can keep ports for monitoring, but typically internal
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.103.0
+    # Remove published ports in prod - use internal network
+    ports: []
+  
+  # Presidio services: Keep internal only
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    ports: []
+  
+  presidio-anonymizer:
+    image: mcr.microsoft.com/presidio-anonymizer:latest
+    ports: []
+  
+  # Postgres: Internal only in production - access via nginx only
+  postgres:
+    ports: []
+  
+  postgres-langfuse:
+    ports: []
+

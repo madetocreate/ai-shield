@@ -1,0 +1,315 @@
+{
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "success": "Successo",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "create": "Crea",
+    "search": "Cerca",
+    "filter": "Filtro",
+    "close": "Chiudi",
+    "back": "Indietro",
+    "next": "Avanti",
+    "previous": "Precedente",
+    "submit": "Invia",
+    "confirm": "Conferma",
+    "yes": "Sì",
+    "no": "No",
+    "preview": "Anteprima"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "language": "Lingua",
+    "languageDescription": "Seleziona la tua lingua preferita",
+    "theme": "Tema",
+    "themeDescription": "Scegli tra Modalità Chiara, Modalità Scura o impostazione Sistema",
+    "themeLight": "Chiaro",
+    "themeDark": "Scuro",
+    "themeSystem": "Sistema",
+    "themeSystemDetected": "Sistema: {{theme}}",
+    "general": "Generale",
+    "notifications": "Notifiche",
+    "account": "Account",
+    "security": "Sicurezza"
+  },
+  "commandPalette": {
+    "placeholder": "Cerca comandi...",
+    "noResults": "Nessun risultato trovato",
+    "navigate": "Naviga",
+    "select": "Seleziona",
+    "close": "Chiudi",
+    "marketplace": "Apri Marketplace",
+    "marketplaceDesc": "Sfoglia e installa agenti",
+    "analytics": "Apri Analytics",
+    "analyticsDesc": "Visualizza metriche e report",
+    "integrations": "Apri Integrazioni",
+    "integrationsDesc": "Connetti servizi esterni",
+    "realtime": "Apri Dashboard in tempo reale",
+    "realtimeDesc": "Metriche e avvisi in diretta",
+    "settings": "Apri Impostazioni",
+    "settingsDesc": "Gestisci impostazioni di sistema",
+    "docs": "Apri Documentazione",
+    "docsDesc": "Aiuto e guide",
+    "language": "Cambia Lingua",
+    "languageDesc": "Apri impostazioni lingua"
+  },
+  "suggestions": {
+    "marketplaceTip": "Suggerimento: Sfoglia Agenti",
+    "marketplaceTipDesc": "Scopri nuovi agenti nel marketplace che possono migliorare i tuoi flussi di lavoro.",
+    "createReport": "Crea il tuo primo report",
+    "createReportDesc": "Analizza i tuoi dati con report personalizzati.",
+    "createNow": "Crea Ora",
+    "firstAgent": "Crea il tuo primo agente",
+    "firstAgentDesc": "Inizia con un modello predefinito o crea il tuo agente.",
+    "browseAgents": "Sfoglia Agenti",
+    "expandAgents": "Espandi la tua collezione di agenti",
+    "expandAgentsDesc": "Hai già {{count}} agenti. Scopri più possibilità nel marketplace.",
+    "explore": "Esplora"
+  },
+  "marketplace": {
+    "title": "Marketplace degli Agenti",
+    "searchPlaceholder": "Cerca agenti...",
+    "category": "Categoria",
+    "allCategories": "Tutte le categorie",
+    "categoryGastronomy": "Gastronomia",
+    "categoryPractice": "Pratica",
+    "categoryGeneral": "Generale",
+    "install": "Installa",
+    "uninstall": "Disinstalla",
+    "installed": "Installato",
+    "rating": "Valutazione",
+    "reviews": "Recensioni",
+    "downloads": "Installazioni",
+    "author": "Autore",
+    "version": "Versione",
+    "description": "Descrizione",
+    "tags": "Tag",
+    "by": "di",
+    "docs": "Docs",
+    "noAgentsFound": "Nessun agente trovato",
+    "noAgentsFoundDesc": "Nessun agente trovato corrispondente ai tuoi criteri di ricerca. Prova con termini di ricerca diversi o sfoglia tutte le categorie.",
+    "browseTemplates": "Sfoglia Modelli",
+    "loadingAgents": "Caricamento agenti...",
+    "installSuccess": "Agente installato con successo",
+    "uninstallSuccess": "Agente disinstallato con successo",
+    "installError": "Errore durante l'installazione dell'agente",
+    "uninstallError": "Errore durante la disinstallazione dell'agente"
+  },
+  "integrations": {
+    "title": "Integrazioni",
+    "description": "Collega i tuoi servizi esterni con AI Shield. Tutte le connessioni sono gestite in modo sicuro tramite Nango.",
+    "approvalQueue": "Coda di approvazione",
+    "pendingApprovals": "Le operazioni di scrittura richiedono la tua approvazione prima dell'esecuzione.",
+    "noPendingApprovals": "Nessuna approvazione in sospeso",
+    "approve": "Approva ed Esegui",
+    "reject": "Rifiuta",
+    "created": "Creato",
+    "provider": "Fornitore",
+    "account": "Account",
+    "status": "In sospeso",
+    "statusConnected": "Connesso",
+    "statusDisconnected": "Disconnesso",
+    "statusPending": "In sospeso",
+    "actions": "Azioni",
+    "connect": "Connetti",
+    "disconnect": "Disconnetti",
+    "confirmDisconnect": "Vuoi davvero disconnettere {{provider}}?",
+    "permissions": "Autorizzazioni",
+    "approveSuccess": "Integrazione approvata con successo",
+    "rejectSuccess": "Integrazione rifiutata con successo",
+    "approveError": "Errore durante l'approvazione",
+    "rejectError": "Errore durante il rifiuto"
+  },
+  "analytics": {
+    "title": "Dashboard Analytics",
+    "overview": "Panoramica",
+    "metrics": "Metriche",
+    "reports": "Report",
+    "dateRange": "Intervallo di date",
+    "today": "Oggi",
+    "week": "Settimana",
+    "month": "Mese",
+    "year": "Anno",
+    "selectMetric": "Seleziona metrica",
+    "currentValue": "Valore attuale",
+    "average": "Media",
+    "trend": "Tendenza",
+    "anomaly": "Anomalia",
+    "detected": "Rilevata",
+    "normal": "Normale",
+    "score": "Punteggio",
+    "forecast7Days": "Previsione a 7 giorni",
+    "prediction": "Previsione",
+    "lowerBound": "Limite inferiore",
+    "upperBound": "Limite superiore",
+    "statistics": "Statistiche",
+    "median": "Mediana",
+    "standardDeviation": "Deviazione standard",
+    "dataPoints": "Punti dati",
+    "anomalyDetails": "Dettagli anomalia",
+    "forecastMethod": "Metodo di previsione",
+    "noMetricSelected": "Nessuna metrica selezionata",
+    "noMetricSelectedDesc": "Seleziona una metrica per visualizzare insights, tendenze e previsioni.",
+    "selectMetricNow": "Seleziona Metrica"
+  },
+  "realtime": {
+    "title": "Dashboard in tempo reale",
+    "metrics": "Metriche in tempo reale",
+    "alerts": "Avvisi",
+    "noAlerts": "Nessun avviso attivo",
+    "resolve": "Risolvi",
+    "timestamp": "Timestamp",
+    "connected": "Connesso",
+    "disconnected": "Disconnesso",
+    "activeAlerts": "Avvisi attivi",
+    "agent": "Agente",
+    "metricsTrend": "Tendenza metriche",
+    "metric": "Metrica",
+    "noMetricsAvailable": "Nessuna metrica disponibile",
+    "noMetricsAvailableDesc": "Nessuna metrica in tempo reale è ancora disponibile. Le metriche verranno aggiornate automaticamente una volta che i dati saranno disponibili.",
+    "refresh": "Aggiorna"
+  },
+  "onboarding": {
+    "step": "Passo",
+    "of": "di",
+    "complete": "Completa",
+    "skip": "Salta",
+    "welcome": "Benvenuto in AI Shield!",
+    "welcomeDesc": "Ti mostreremo come usare il sistema.",
+    "steps": {
+      "welcome": {
+        "title": "Benvenuto!",
+        "description": "Benvenuto in AI Shield! Questo tour veloce ti mostrerà le funzionalità più importanti."
+      },
+      "marketplace": {
+        "title": "Marketplace degli Agenti",
+        "description": "Qui troverai tutti gli agenti disponibili. Puoi cercarli, installarli e gestirli.",
+        "action": "Vai al Marketplace"
+      },
+      "integrations": {
+        "title": "Integrazioni",
+        "description": "Collega servizi esterni come Google Calendar, Shopify o WhatsApp con AI Shield."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Analizza le prestazioni dei tuoi agenti, individua tendenze e crea report."
+      },
+      "settings": {
+        "title": "Impostazioni",
+        "description": "Personalizza lingua, tema e altre impostazioni secondo le tue preferenze."
+      }
+    }
+  },
+  "toast": {
+    "success": "Successo",
+    "error": "Errore",
+    "warning": "Avviso",
+    "info": "Info"
+  },
+  "aiHelp": {
+    "title": "Aiuto IA",
+    "openChat": "Apri aiuto",
+    "welcome": "Come posso aiutarti?",
+    "placeholder": "Fai una domanda...",
+    "didYouMean": "Intendevi: {{error}}?",
+    "checkConnection": "Verifica connessione",
+    "verifyCredentials": "Verifica credenziali",
+    "contactSupport": "Contatta supporto",
+    "installAgentHelp": "Per installare un agente, vai al Marketplace, seleziona un agente e clicca su 'Installa'.",
+    "errorHelp": "Se vedi un errore, controlla il messaggio di errore sopra. Spesso aiuta ricaricare la pagina o verificare la connessione.",
+    "integrationHelp": "Per connettere un'integrazione, vai a Integrazioni, seleziona un fornitore e clicca su 'Connetti'.",
+    "defaultHelp": "Posso aiutarti con domande su agenti, integrazioni, analytics e altro. Cosa vorresti sapere?",
+    "suggestionCheckLogs": "Controlla log",
+    "suggestionRestart": "Riavvia sistema"
+  },
+  "errors": {
+    "genericError": "Si è verificato un errore",
+    "networkError": "Problema di connessione",
+    "authError": "Errore di autenticazione",
+    "permissionError": "Errore di permesso",
+    "howToFix": "Come risolvere?",
+    "tryAgain": "Riprova",
+    "checkConnection": "Verifica connessione",
+    "checkInternet": "Verifica connessione Internet",
+    "checkFirewall": "Verifica impostazioni firewall",
+    "tryAgainLater": "Riprova più tardi",
+    "checkCredentials": "Verifica credenziali",
+    "reLogin": "Accedi di nuovo",
+    "contactSupport": "Contatta supporto",
+    "checkPermissions": "Verifica permessi",
+    "contactAdmin": "Contatta amministratore",
+    "upgradePlan": "Aggiorna piano",
+    "suggestions": "Suggerimenti",
+    "helpCenter": "Apri Centro Assistenza"
+  },
+  "shortcuts": {
+    "search": "Apri ricerca",
+    "new": "Crea nuovo",
+    "save": "Salva",
+    "settings": "Impostazioni",
+    "help": "Aiuto"
+  },
+  "sidebar": {
+    "title": "Navigazione",
+    "dashboard": "Dashboard",
+    "marketplace": "Marketplace",
+    "analytics": "Analytics",
+    "integrations": "Integrazioni",
+    "realtime": "Tempo reale",
+    "settings": "Impostazioni",
+    "onboarding": "Onboarding",
+    "wizards": "Procedure guidate",
+    "devTools": "Strumenti Dev",
+    "devMode": "Modalità Sviluppo",
+    "onboardingStarted": "Onboarding avviato",
+    "onboardingComplete": "Onboarding completato",
+    "wizardsComingSoon": "Procedure guidate in arrivo"
+  },
+  "wizards": {
+    "title": "Procedure guidate",
+    "step": "Passo",
+    "of": "di",
+    "finish": "Termina",
+    "complete": "Procedura guidata completata",
+    "agentSetup": {
+      "title": "Configurazione Agente",
+      "description": "Crea un nuovo agente passo dopo passo",
+      "steps": {
+        "selectTemplate": {
+          "title": "Seleziona Modello",
+          "description": "Scegli un modello per il tuo agente",
+          "content": "La selezione del modello verrà mostrata qui..."
+        },
+        "configure": {
+          "title": "Configura",
+          "description": "Configura il tuo agente",
+          "content": "La configurazione verrà mostrata qui..."
+        },
+        "review": {
+          "title": "Rivedi",
+          "description": "Rivedi le tue impostazioni",
+          "content": "La revisione verrà mostrata qui..."
+        }
+      }
+    },
+    "integrationSetup": {
+      "title": "Configurazione Integrazione",
+      "description": "Configura una nuova integrazione",
+      "steps": {
+        "selectProvider": {
+          "title": "Seleziona Fornitore",
+          "description": "Scegli un fornitore di integrazione",
+          "content": "La selezione del fornitore verrà mostrata qui..."
+        },
+        "configure": {
+          "title": "Configura",
+          "description": "Configura l'integrazione",
+          "content": "La configurazione verrà mostrata qui..."
+        }
+      }
+    }
+  }
+}

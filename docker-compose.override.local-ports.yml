@@ -1,0 +1,4 @@
+services:
+  jaeger:
+    ports:
+      - "14317:4317"

@@ -1,0 +1,310 @@
+import os
+import json
+import re
+import hashlib
+import yaml
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import httpx
+from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
+DATA_DIR = Path(os.environ.get("CONTROL_PLANE_DATA_DIR", "/app/data"))
+REGISTRY_PATH = Path(os.environ.get("CONTROL_PLANE_REGISTRY_PATH", str(DATA_DIR / "mcp_registry.json")))
+
+GATEWAY_BASE_URL = os.environ.get("GATEWAY_BASE_URL", "http://gateway:4000").rstrip("/")
+GATEWAY_ADMIN_KEY = os.environ.get("GATEWAY_ADMIN_KEY", "")
+ADMIN_KEY = os.environ.get("CONTROL_PLANE_ADMIN_KEY", "")
+
+TOOL_CAT_DANGEROUS = re.compile(r"(?i)\b(delete|remove|drop|destroy|revoke|shutdown|terminate|kill|rm|wipe)\b")
+TOOL_CAT_WRITE = re.compile(r"(?i)\b(create|update|set|write|send|post|put|patch|run|exec|apply|deploy|transfer|charge|payment)\b")
+TOOL_POISON = re.compile(r"(?i)(ignore\s+previous|system\s+prompt|do\s+not\s+tell|exfiltrat|secret|apikey|token|credential)")
+
+class MCPServerIn(BaseModel):
+    server_id: str = Field(..., min_length=2, max_length=64, pattern="^[A-Za-z0-9][A-Za-z0-9_-]{1,63}$")
+    url: str = Field(..., min_length=4, max_length=2048)
+    transport: str = Field("streamable_http")
+    auth_type: str = Field("none")
+    headers: Dict[str, str] = Field(default_factory=dict)
+    preset: str = Field("read_only")
+
+class MCPPinResult(BaseModel):
+    server_id: str
+    pinned_tools_hash: str
+    tool_count: int
+    pinned_at: str
+
+def _require_admin(x_ai_shield_admin_key: Optional[str]):
+    """Security: Require admin key for privileged operations."""
+    if not ADMIN_KEY:
+        raise HTTPException(status_code=500, detail="CONTROL_PLANE_ADMIN_KEY not set")
+    if not x_ai_shield_admin_key or x_ai_shield_admin_key != ADMIN_KEY:
+        raise HTTPException(status_code=401, detail="unauthorized")
+
+
+# Security: Dependency for admin key enforcement
+def require_admin_key(x_ai_shield_admin_key: Optional[str] = Header(default=None)):
+    """FastAPI dependency to enforce admin key on endpoints."""
+    _require_admin(x_ai_shield_admin_key)
+    return True
+
+def _load_registry() -> Dict[str, Any]:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if not REGISTRY_PATH.exists():
+        REGISTRY_PATH.write_text(json.dumps({"servers": {}}, indent=2) + "\n", encoding="utf-8")
+    try:
+        obj = json.loads(REGISTRY_PATH.read_text(encoding="utf-8") or "{}")
+    except Exception:
+        obj = {"servers": {}}
+    if not isinstance(obj, dict):
+        obj = {"servers": {}}
+    if "servers" not in obj or not isinstance(obj["servers"], dict):
+        obj["servers"] = {}
+    return obj
+
+def _save_registry(obj: Dict[str, Any]) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = REGISTRY_PATH.with_suffix(".tmp")
+    tmp.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    tmp.replace(REGISTRY_PATH)
+
+def _sha256_canonical(obj: Any) -> str:
+    b = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(b).hexdigest()
+
+def _classify_tool(name: str, description: str) -> str:
+    if TOOL_POISON.search(description or ""):
+        return "dangerous"
+    if TOOL_CAT_DANGEROUS.search(name or ""):
+        return "dangerous"
+    if TOOL_CAT_WRITE.search(name or ""):
+        return "write"
+    return "read"
+
+async def _gateway_get_tools(server_id: str) -> Any:
+    if not GATEWAY_ADMIN_KEY:
+        raise HTTPException(status_code=500, detail="GATEWAY_ADMIN_KEY not set")
+    url = f"{GATEWAY_BASE_URL}/mcp-rest/tools/list"
+    headers = {"Authorization": f"Bearer {GATEWAY_ADMIN_KEY}", "x-litellm-api-key": GATEWAY_ADMIN_KEY}
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        r = await client.get(url, params={"server_id": server_id}, headers=headers)
+        if r.status_code >= 400:
+            raise HTTPException(status_code=502, detail={"gateway_status": r.status_code, "gateway_body": r.text})
+        try:
+            return r.json()
+        except Exception:
+            raise HTTPException(status_code=502, detail="gateway returned non-json")
+
+def _extract_tools(payload: Any) -> List[Dict[str, Any]]:
+    if isinstance(payload, dict):
+        for k in ("tools", "data", "result"):
+            v = payload.get(k)
+            if isinstance(v, list):
+                return [x for x in v if isinstance(x, dict)]
+        if "result" in payload and isinstance(payload["result"], dict):
+            v = payload["result"].get("tools")
+            if isinstance(v, list):
+                return [x for x in v if isinstance(x, dict)]
+    if isinstance(payload, list):
+        return [x for x in payload if isinstance(x, dict)]
+    return []
+
+def _allowed_params_from_tool(tool: Dict[str, Any]) -> Optional[List[str]]:
+    schema = tool.get("inputSchema")
+    if not isinstance(schema, dict):
+        return None
+    props = schema.get("properties")
+    if not isinstance(props, dict):
+        return None
+    return [str(k) for k in props.keys()]
+
+app = FastAPI(
+    title="AI Shield Control Plane",
+    description="""
+    AI Shield Control Plane API für MCP-Server-Verwaltung und Tool-Policy-Management.
+    
+    ## Features
+    
+    * **MCP Server Registry**: Zentrale Verwaltung von MCP-Servern
+    * **Tool Pinning**: Automatische Kategorisierung und Policy-Generierung
+    * **LiteLLM Integration**: Export von LiteLLM-Konfigurationen
+    * **Integrations**: OAuth-Integrationen via Nango (Google, Shopify, WooCommerce, WhatsApp)
+    
+    ## Authentifizierung
+    
+    Alle Endpoints (außer `/health`) erfordern den Header:
+    ```
+    x-ai-shield-admin-key: <CONTROL_PLANE_ADMIN_KEY>
+    ```
+    """,
+    version="1.0.0",
+    contact={
+        "name": "AI Shield",
+        "url": "https://github.com/madetocreate/ai-shield",
+    },
+    license_info={
+        "name": "MIT",
+    },
+)
+
+# CORS Middleware für Frontend-Zugriff
+# Konfigurierbar via CONTROL_PLANE_ALLOWED_ORIGINS (komma-separiert)
+# Default nur für Dev (localhost)
+ALLOWED_ORIGINS_ENV = os.environ.get("CONTROL_PLANE_ALLOWED_ORIGINS", "")
+APP_ENV = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "production")).lower()
+
+if ALLOWED_ORIGINS_ENV:
+    # Parse komma-separierte Liste
+    allowed_origins = [origin.strip() for origin in ALLOWED_ORIGINS_ENV.split(",") if origin.strip()]
+    allow_credentials = True
+elif APP_ENV == "production":
+    # Production: Kein Default, muss explizit gesetzt werden
+    allowed_origins = []
+    allow_credentials = True
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "⚠️  CONTROL_PLANE_ALLOWED_ORIGINS not set in production. CORS will block all origins. "
+        "Set CONTROL_PLANE_ALLOWED_ORIGINS to allow specific origins."
+    )
+else:
+    # Dev-only fallback: localhost
+    allowed_origins = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]
+    allow_credentials = True
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=allow_credentials,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include integrations routers
+from app.integrations.api import router as integrations_router
+from app.integrations.approvals import router as approvals_router
+app.include_router(integrations_router)
+app.include_router(approvals_router)
+
+# Include auth routers
+from app.auth import router as auth_router
+from app.auth_enhanced import enhanced_router as auth_enhanced_router
+app.include_router(auth_router)
+app.include_router(auth_enhanced_router)
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/v1/mcp/registry")
+def get_registry(x_ai_shield_admin_key: Optional[str] = Header(default=None)):
+    _require_admin(x_ai_shield_admin_key)
+    return _load_registry()
+
+@app.post("/v1/mcp/registry")
+def upsert_registry(server: MCPServerIn, x_ai_shield_admin_key: Optional[str] = Header(default=None)):
+    _require_admin(x_ai_shield_admin_key)
+    reg = _load_registry()
+    prev = reg["servers"].get(server.server_id, {})
+    reg["servers"][server.server_id] = {
+        "server_id": server.server_id,
+        "url": server.url,
+        "transport": server.transport,
+        "auth_type": server.auth_type,
+        "headers": server.headers,
+        "preset": server.preset,
+        "pinned_tools_hash": prev.get("pinned_tools_hash"),
+        "auto_approve_tools": prev.get("auto_approve_tools", []),
+        "hitl_tools": prev.get("hitl_tools", []),
+        "allowed_params": prev.get("allowed_params", {}),
+        "tool_categories": prev.get("tool_categories", {}),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    _save_registry(reg)
+    return {"ok": True, "server_id": server.server_id}
+
+@app.post("/v1/mcp/pin/{server_id}", response_model=MCPPinResult)
+async def pin_server(server_id: str, x_ai_shield_admin_key: Optional[str] = Header(default=None)):
+    _require_admin(x_ai_shield_admin_key)
+    reg = _load_registry()
+    if server_id not in reg["servers"]:
+        raise HTTPException(status_code=404, detail="server_id not found in registry")
+    payload = await _gateway_get_tools(server_id)
+    tools = _extract_tools(payload)
+    pinned_hash = _sha256_canonical(tools)
+    cats: Dict[str, str] = {}
+    allowed_params: Dict[str, List[str]] = {}
+    auto_approve: List[str] = []
+    hitl: List[str] = []
+    for t in tools:
+        name = str(t.get("name") or "")
+        desc = str(t.get("description") or "")
+        if not name:
+            continue
+        cat = _classify_tool(name, desc)
+        cats[name] = cat
+        ap = _allowed_params_from_tool(t)
+        if isinstance(ap, list):
+            allowed_params[name] = ap
+        if cat == "read":
+            auto_approve.append(name)
+        else:
+            hitl.append(name)
+    reg["servers"][server_id]["pinned_tools_hash"] = pinned_hash
+    reg["servers"][server_id]["tool_categories"] = cats
+    reg["servers"][server_id]["allowed_params"] = allowed_params
+    reg["servers"][server_id]["auto_approve_tools"] = auto_approve
+    reg["servers"][server_id]["hitl_tools"] = hitl
+    reg["servers"][server_id]["pinned_at"] = datetime.now(timezone.utc).isoformat()
+    _save_registry(reg)
+    return MCPPinResult(server_id=server_id, pinned_tools_hash=pinned_hash, tool_count=len(tools), pinned_at=reg["servers"][server_id]["pinned_at"])
+
+@app.get("/v1/mcp/litellm-snippet")
+def litellm_snippet(x_ai_shield_admin_key: Optional[str] = Header(default=None)):
+    _require_admin(x_ai_shield_admin_key)
+    reg = _load_registry()
+    mcp_servers: Dict[str, Any] = {}
+    
+    for sid, s in reg["servers"].items():
+        server_config: Dict[str, Any] = {
+            "url": s.get("url", ""),
+            "transport": s.get("transport", "streamable_http"),
+            "auth_type": s.get("auth_type", "none"),
+        }
+        
+        hdrs = s.get("headers") or {}
+        if isinstance(hdrs, dict) and len(hdrs) > 0:
+            server_config["headers"] = hdrs
+        
+        cats = s.get("tool_categories") or {}
+        preset = str(s.get("preset") or "read_only")
+        if isinstance(cats, dict) and len(cats) > 0:
+            if preset == "read_only":
+                allowed = [k for k, v in cats.items() if v == "read"]
+                disallowed = [k for k, v in cats.items() if v != "read"]
+            else:
+                allowed = [k for k, v in cats.items() if v != "dangerous"]
+                disallowed = [k for k, v in cats.items() if v == "dangerous"]
+            if allowed:
+                server_config["allowed_tools"] = sorted(allowed)
+            if disallowed:
+                server_config["disallowed_tools"] = sorted(disallowed)
+        
+        ap = s.get("allowed_params") or {}
+        if isinstance(ap, dict) and len(ap) > 0:
+            allowed_params: Dict[str, List[str]] = {}
+            for tool_name, params in ap.items():
+                if isinstance(params, list):
+                    allowed_params[tool_name] = params
+            if allowed_params:
+                server_config["allowed_params"] = allowed_params
+        
+        mcp_servers[sid] = server_config
+    
+    yaml_obj = {"mcp_servers": mcp_servers}
+    yaml_str = yaml.safe_dump(yaml_obj, sort_keys=False, allow_unicode=True)
+    return {"yaml": yaml_str}

@@ -1,0 +1,33 @@
+# KMU Standard Policy Pack
+# Version: 1.0.0
+# Beschreibung: Standard-Policy für kleine und mittlere Unternehmen
+# 
+# Diese Policy bietet:
+# - Moderate PII-Schutz (Maskierung statt Blockierung)
+# - Prompt-Injection-Schutz
+# - Tool-Permission-Management
+
+version: "1.0.0"
+name: "kmu_standard"
+description: "Standard-Policy für kleine und mittlere Unternehmen"
+
+rules:
+  # PII Protection
+  pii:
+    email: mask  # Maskiere E-Mail-Adressen
+    phone: mask  # Maskiere Telefonnummern
+    credit_card: block  # Blockiere Kreditkartennummern
+  
+  # Prompt Injection Protection
+  injection:
+    threshold: 6  # Moderate Schwelle
+    enabled: true
+  
+  # Tool Permissions
+  tools:
+    risky_tool_regex: "(?i)(delete|remove|drop|payment|transfer|send_email)"
+    require_approval: true
+  
+  # Compatibility Mode
+  default_compatibility_mode: warn  # Warn statt Block für bessere UX
+

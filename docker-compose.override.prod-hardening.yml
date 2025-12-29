@@ -1,0 +1,7 @@
+services:
+  gateway:
+    environment:
+      LITELLM_LOG: ${LITELLM_LOG:-ERROR}
+    depends_on:
+      langfuse:
+        condition: service_started

@@ -1,0 +1,27 @@
+default_preset: public_website
+
+presets:
+  public_website:
+    pii:
+      email: mask
+      phone: mask
+      credit_card: block
+    mcp:
+      auto_approve_requires_allowlist: true
+      risky_tool_name_regex: "(?i)(create|update|delete|remove|drop|send|write|post|put|patch|exec|run|payment|transfer|email)"
+  internal_support:
+    pii:
+      email: mask
+      phone: mask
+      credit_card: mask
+    mcp:
+      auto_approve_requires_allowlist: true
+      risky_tool_name_regex: "(?i)(delete|remove|drop|payment|transfer|send_email)"
+  ops_agent:
+    pii:
+      email: mask
+      phone: mask
+      credit_card: block
+    mcp:
+      auto_approve_requires_allowlist: true
+      risky_tool_name_regex: "(?i)(create|update|delete|remove|drop|send|write|post|put|patch|exec|run|payment|transfer|email)"
