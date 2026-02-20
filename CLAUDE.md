@@ -23,7 +23,7 @@ LLM Security Middleware SDK in TypeScript. Monorepo with 4 packages.
 ## Commands
 
 ```bash
-npm test                                    # 87 tests, <600ms
+npm test                                    # 193 tests, <700ms
 npm run build --workspaces                  # Build all packages
 npm run typecheck --workspaces              # TypeCheck all packages
 npx tsc -p packages/core/tsconfig.json      # Build single package

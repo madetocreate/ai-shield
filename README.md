@@ -640,10 +640,18 @@ ai-shield/
 │
 ├── tests/
 │   └── unit/
-│       ├── heuristic.test.ts  42 tests
-│       ├── pii.test.ts        20 tests
-│       ├── tools.test.ts      12 tests
-│       └── shield.test.ts     13 tests
+│       ├── heuristic.test.ts         42 tests
+│       ├── cost.test.ts              26 tests
+│       ├── pii.test.ts               20 tests
+│       ├── policy-engine.test.ts     16 tests
+│       ├── chain.test.ts             15 tests
+│       ├── middleware.test.ts         13 tests
+│       ├── shield.test.ts            13 tests
+│       ├── audit.test.ts             13 tests
+│       ├── tools.test.ts             12 tests
+│       ├── openai-wrapper.test.ts     9 tests
+│       ├── canary.test.ts             7 tests
+│       └── anthropic-wrapper.test.ts  7 tests
 │
 ├── package.json               Monorepo root (npm workspaces)
 ├── tsconfig.json              Strict TypeScript
@@ -655,15 +663,23 @@ ai-shield/
 ## Tests
 
 ```bash
-npm test            # 87 tests, <600ms
+npm test            # 193 tests, <700ms
 ```
 
 | Suite | Tests | Covers |
-|-------|-------|--------|
+|-------|------:|--------|
 | Heuristic | 42 | 23 injection prompts, 15 clean prompts, config, performance |
+| Cost | 26 | Budget checks, cost recording, pricing table, anomaly z-score |
 | PII | 20 | IBAN, credit card, email, phone, tax ID, IP, URL, masking, modes |
-| Tool Policy | 12 | Allow/deny, wildcards, manifest pin/drift, performance |
+| Policy Engine | 16 | All 3 presets, thresholds, PII actions, tool policies, budgets |
+| Scanner Chain | 15 | Execution, escalation, early-exit, sanitization, metadata |
+| Middleware | 13 | Input extraction (6 fields + messages[]), blocked response format |
 | Shield | 13 | Default config, presets, tool policy, cost, convenience, metadata |
+| Audit | 13 | Logging, SHA-256 hashing, batching, flush, close |
+| Tool Policy | 12 | Allow/deny, wildcards, manifest pin/drift, performance |
+| OpenAI Wrapper | 9 | Clean input, injection blocking, PII masking, callbacks, output scan |
+| Canary | 7 | Token injection, uniqueness, leak detection |
+| Anthropic Wrapper | 7 | Clean input, injection blocking, PII masking, multi-block, output scan |
 
 ---
 
