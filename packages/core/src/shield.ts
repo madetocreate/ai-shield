@@ -7,6 +7,7 @@ import { PolicyEngine } from "./policy/engine.js";
 import { CostTracker } from "./cost/tracker.js";
 import { AuditLogger, ConsoleAuditStore } from "./audit/logger.js";
 import type { AuditStore } from "./audit/types.js";
+import { ScanLRUCache } from "./cache/lru.js";
 
 // ============================================================
 // AIShield — Main class, single entry point
@@ -17,6 +18,7 @@ export class AIShield {
   private policyEngine: PolicyEngine;
   private costTracker: CostTracker | null;
   private auditLogger: AuditLogger | null;
+  private scanCache: ScanLRUCache<ScanResult> | null;
   private config: ShieldConfig;
 
   constructor(config: ShieldConfig = {}) {
@@ -34,6 +36,14 @@ export class AIShield {
 
     // Audit logger (optional)
     this.auditLogger = this.setupAudit(config);
+
+    // Scan cache (enabled when cache config is provided)
+    this.scanCache = config.cache && config.cache.enabled !== false
+      ? new ScanLRUCache<ScanResult>({
+          maxSize: config.cache.maxSize,
+          ttlMs: config.cache.ttlMs,
+        })
+      : null;
   }
 
   /** Scan input text — the main API */
@@ -43,7 +53,22 @@ export class AIShield {
       context.preset = this.config.preset ?? "public_website";
     }
 
+    // Check cache
+    if (this.scanCache) {
+      const cacheKey = this.buildCacheKey(input, context);
+      const cached = this.scanCache.get(cacheKey);
+      if (cached) {
+        return { ...cached, meta: { ...cached.meta, cached: true } };
+      }
+    }
+
     const result = await this.chain.run(input, context);
+
+    // Store in cache
+    if (this.scanCache) {
+      const cacheKey = this.buildCacheKey(input, context);
+      this.scanCache.set(cacheKey, result);
+    }
 
     // Log to audit if enabled
     if (this.auditLogger) {
@@ -93,14 +118,35 @@ export class AIShield {
     return this.policyEngine;
   }
 
+  /** Clear the scan cache */
+  clearCache(): void {
+    this.scanCache?.clear();
+  }
+
+  /** Get cache stats */
+  get cacheSize(): number {
+    return this.scanCache?.size ?? 0;
+  }
+
   /** Graceful shutdown */
   async close(): Promise<void> {
+    this.scanCache?.clear();
     if (this.auditLogger) {
       await this.auditLogger.close();
     }
   }
 
   // --- Private setup ---
+
+  private buildCacheKey(input: string, context: ScanContext): string {
+    // Include preset + tool names in key since they affect scan results
+    const parts = [context.preset ?? "default"];
+    if (context.tools?.length) {
+      parts.push(context.tools.map((t) => t.name).sort().join(","));
+    }
+    parts.push(input);
+    return parts.join("\x00");
+  }
 
   private setupScanners(config: ShieldConfig): void {
     // 1. Heuristic injection scanner (always on unless explicitly disabled)

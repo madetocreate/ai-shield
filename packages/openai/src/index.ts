@@ -4,9 +4,11 @@
 
 export {
   ShieldedOpenAI,
+  ShieldedChatStream,
   ShieldBlockError,
   ShieldBudgetError,
   type ShieldedOpenAIConfig,
+  type ChatCompletionChunk,
 } from "./wrapper.js";
 
 // Re-export core types for convenience

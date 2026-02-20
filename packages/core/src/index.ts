@@ -24,6 +24,9 @@ export { getModelPricing, estimateCost, MODEL_PRICING } from "./cost/pricing.js"
 export { AuditLogger, ConsoleAuditStore, MemoryAuditStore } from "./audit/logger.js";
 export type { AuditStore } from "./audit/types.js";
 
+// Cache
+export { ScanLRUCache, type LRUCacheConfig } from "./cache/lru.js";
+
 // Types (re-export everything)
 export type {
   // Scanner
@@ -58,6 +61,7 @@ export type {
   ShieldConfig,
   InjectionConfig,
   CostConfig,
+  CacheConfig,
   ToolConfig,
   PresetName,
 } from "./types.js";

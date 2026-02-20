@@ -3,6 +3,7 @@ import type { AIShield, ShieldConfig, ScanContext, ScanResult } from "@ai-shield
 // ============================================================
 // Anthropic Shield Wrapper — Drop-in replacement
 // Wraps Anthropic SDK, scans input before & output after
+// Supports both non-streaming and streaming modes
 // ============================================================
 
 export interface ShieldedAnthropicConfig {
@@ -69,9 +70,20 @@ interface AnthropicResponse {
   };
 }
 
+// --- Streaming event types ---
+
+export interface AnthropicStreamEvent {
+  type: string;
+  message?: AnthropicResponse;
+  index?: number;
+  content_block?: ContentBlock;
+  delta?: { type: string; text?: string; stop_reason?: string };
+  usage?: { output_tokens: number };
+}
+
 interface AnthropicLike {
   messages: {
-    create(params: AnthropicCreateParams): Promise<AnthropicResponse>;
+    create(params: AnthropicCreateParams): Promise<AnthropicResponse | AsyncIterable<AnthropicStreamEvent>>;
   };
 }
 
@@ -153,15 +165,19 @@ export class ShieldedAnthropic {
       .join("\n");
   }
 
-  /** Create message with Shield protection */
-  async createMessage(
-    params: AnthropicCreateParams,
-  ): Promise<AnthropicResponse & { _shield?: { input: ScanResult; output?: ScanResult } }> {
+  /** Scan input and validate budget — shared between streaming and non-streaming */
+  private async scanInput(params: AnthropicCreateParams): Promise<{
+    shieldInstance: AIShield;
+    context: ScanContext;
+    userContent: string;
+    inputResult: ScanResult;
+    finalParams: AnthropicCreateParams;
+  }> {
     const shieldInstance = await this.getShield();
     const context = this.buildContext(params);
+    const userContent = this.extractUserContent(params.messages);
 
     // --- Scan user input ---
-    const userContent = this.extractUserContent(params.messages);
     const inputResult = await shieldInstance.scan(userContent, context);
 
     if (inputResult.decision === "block") {
@@ -179,8 +195,7 @@ export class ShieldedAnthropic {
         ? params.system
         : params.system.map((b) => b.text).join("\n");
 
-      // System prompt scan is informational only (don't block our own system prompt)
-      // But DO scan it for PII leaks
+      // System prompt scan is informational only
       await shieldInstance.scan(systemText, { ...context, preset: "ops_agent" });
     }
 
@@ -195,7 +210,7 @@ export class ShieldedAnthropic {
       const estimate = await shieldInstance.checkBudget(
         this.config.agentId,
         params.model,
-        userContent.length * 0.75, // rough token estimate
+        userContent.length * 0.75,
       );
       if (!estimate.allowed) {
         throw new ShieldBudgetError(
@@ -205,8 +220,17 @@ export class ShieldedAnthropic {
       }
     }
 
+    return { shieldInstance, context, userContent, inputResult, finalParams };
+  }
+
+  /** Create message with Shield protection (non-streaming) */
+  async createMessage(
+    params: AnthropicCreateParams,
+  ): Promise<AnthropicResponse & { _shield?: { input: ScanResult; output?: ScanResult } }> {
+    const { shieldInstance, context, inputResult, finalParams } = await this.scanInput(params);
+
     // --- Make the actual API call ---
-    const response = await this.client.messages.create(finalParams);
+    const response = await this.client.messages.create({ ...finalParams, stream: false }) as AnthropicResponse;
 
     // --- Record actual cost ---
     if (this.config.agentId && response.usage) {
@@ -231,6 +255,30 @@ export class ShieldedAnthropic {
       ...response,
       _shield: { input: inputResult, output: outputResult },
     };
+  }
+
+  /** Create streaming message with Shield protection */
+  async createMessageStream(
+    params: Omit<AnthropicCreateParams, "stream">,
+  ): Promise<ShieldedAnthropicStream> {
+    const { shieldInstance, context, inputResult, finalParams } =
+      await this.scanInput(params as AnthropicCreateParams);
+
+    // --- Make streaming API call ---
+    const stream = await this.client.messages.create({
+      ...finalParams,
+      stream: true,
+    }) as AsyncIterable<AnthropicStreamEvent>;
+
+    return new ShieldedAnthropicStream(
+      stream,
+      inputResult,
+      shieldInstance,
+      context,
+      this.config.scanOutput ?? false,
+      this.config.agentId,
+      finalParams.model,
+    );
   }
 
   /** Replace user content with sanitized version */
@@ -276,6 +324,110 @@ export class ShieldedAnthropic {
     if (this.shield) {
       await this.shield.close();
     }
+  }
+}
+
+// ============================================================
+// ShieldedAnthropicStream — Async iterable wrapper for streaming
+// Accumulates text from content_block_delta events, scans after
+// ============================================================
+
+export class ShieldedAnthropicStream implements AsyncIterable<AnthropicStreamEvent> {
+  private _inputResult: ScanResult;
+  private _outputResult: ScanResult | undefined;
+  private _done = false;
+  private _fullText = "";
+  private _stream: AsyncIterable<AnthropicStreamEvent>;
+  private _shieldInstance: AIShield;
+  private _context: ScanContext;
+  private _scanOutput: boolean;
+  private _agentId: string | undefined;
+  private _model: string;
+  private _inputTokens = 0;
+  private _outputTokens = 0;
+
+  constructor(
+    stream: AsyncIterable<AnthropicStreamEvent>,
+    inputResult: ScanResult,
+    shieldInstance: AIShield,
+    context: ScanContext,
+    scanOutput: boolean,
+    agentId: string | undefined,
+    model: string,
+  ) {
+    this._stream = stream;
+    this._inputResult = inputResult;
+    this._shieldInstance = shieldInstance;
+    this._context = context;
+    this._scanOutput = scanOutput;
+    this._agentId = agentId;
+    this._model = model;
+  }
+
+  async *[Symbol.asyncIterator](): AsyncGenerator<AnthropicStreamEvent> {
+    for await (const event of this._stream) {
+      // Accumulate text from content_block_delta events
+      if (event.type === "content_block_delta" && event.delta?.type === "text_delta" && event.delta.text) {
+        this._fullText += event.delta.text;
+      }
+
+      // Capture usage from message_start
+      if (event.type === "message_start" && event.message?.usage) {
+        this._inputTokens = event.message.usage.input_tokens;
+      }
+
+      // Capture output tokens from message_delta
+      if (event.type === "message_delta" && event.usage) {
+        this._outputTokens = event.usage.output_tokens;
+      }
+
+      yield event;
+    }
+
+    // --- Post-stream: record cost ---
+    if (this._agentId && (this._inputTokens > 0 || this._outputTokens > 0)) {
+      await this._shieldInstance.recordCost(
+        this._agentId,
+        this._model,
+        this._inputTokens,
+        this._outputTokens,
+      );
+    }
+
+    // --- Post-stream: scan output ---
+    if (this._scanOutput && this._fullText) {
+      this._outputResult = await this._shieldInstance.scan(
+        this._fullText,
+        this._context,
+      );
+    }
+
+    this._done = true;
+  }
+
+  /** Input scan result (available immediately) */
+  get inputResult(): ScanResult {
+    return this._inputResult;
+  }
+
+  /** Output scan result (available after stream completes) */
+  get outputResult(): ScanResult | undefined {
+    return this._outputResult;
+  }
+
+  /** Combined shield results */
+  get shieldResult(): { input: ScanResult; output?: ScanResult } {
+    return { input: this._inputResult, output: this._outputResult };
+  }
+
+  /** Whether the stream has completed */
+  get done(): boolean {
+    return this._done;
+  }
+
+  /** Full accumulated text from the stream */
+  get text(): string {
+    return this._fullText;
   }
 }
 

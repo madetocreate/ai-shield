@@ -3,6 +3,7 @@ import type { AIShield, ShieldConfig, ScanContext, ScanResult } from "@ai-shield
 // ============================================================
 // OpenAI Shield Wrapper — Drop-in replacement
 // Wraps OpenAI SDK, scans input before & output after LLM call
+// Supports both non-streaming and streaming modes
 // ============================================================
 
 export interface ShieldedOpenAIConfig {
@@ -50,10 +51,27 @@ interface ChatCompletion {
   };
 }
 
+export interface ChatCompletionChunk {
+  choices: Array<{
+    delta: {
+      content?: string | null;
+      role?: string;
+      tool_calls?: Array<{ function: { name: string; arguments: string } }>;
+    };
+    index: number;
+    finish_reason: string | null;
+  }>;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
 interface OpenAILike {
   chat: {
     completions: {
-      create(params: ChatCompletionParams): Promise<ChatCompletion>;
+      create(params: ChatCompletionParams): Promise<ChatCompletion | AsyncIterable<ChatCompletionChunk>>;
     };
   };
 }
@@ -129,10 +147,14 @@ export class ShieldedOpenAI {
     return parts.join("\n");
   }
 
-  /** Create chat completion with Shield protection */
-  async createChatCompletion(
-    params: ChatCompletionParams,
-  ): Promise<ChatCompletion & { _shield?: { input: ScanResult; output?: ScanResult } }> {
+  /** Scan input and validate budget — shared between streaming and non-streaming */
+  private async scanInput(params: ChatCompletionParams): Promise<{
+    shieldInstance: AIShield;
+    context: ScanContext;
+    userContent: string;
+    inputResult: ScanResult;
+    finalParams: ChatCompletionParams;
+  }> {
     const shieldInstance = await this.getShield();
     const context = this.buildContext(params);
     const userContent = this.extractUserContent(params.messages);
@@ -142,10 +164,7 @@ export class ShieldedOpenAI {
 
     if (inputResult.decision === "block") {
       this.config.onBlocked?.(inputResult, params.messages);
-      throw new ShieldBlockError(
-        "Input blocked by AI Shield",
-        inputResult,
-      );
+      throw new ShieldBlockError("Input blocked by AI Shield", inputResult);
     }
 
     if (inputResult.decision === "warn") {
@@ -173,8 +192,17 @@ export class ShieldedOpenAI {
       }
     }
 
+    return { shieldInstance, context, userContent, inputResult, finalParams };
+  }
+
+  /** Create chat completion with Shield protection (non-streaming) */
+  async createChatCompletion(
+    params: ChatCompletionParams,
+  ): Promise<ChatCompletion & { _shield?: { input: ScanResult; output?: ScanResult } }> {
+    const { shieldInstance, context, inputResult, finalParams } = await this.scanInput(params);
+
     // --- Make the actual API call ---
-    const response = await this.client.chat.completions.create(finalParams);
+    const response = await this.client.chat.completions.create({ ...finalParams, stream: false }) as ChatCompletion;
 
     // --- Record cost ---
     if (this.config.agentId && response.usage) {
@@ -199,6 +227,30 @@ export class ShieldedOpenAI {
       ...response,
       _shield: { input: inputResult, output: outputResult },
     };
+  }
+
+  /** Create streaming chat completion with Shield protection */
+  async createChatCompletionStream(
+    params: Omit<ChatCompletionParams, "stream">,
+  ): Promise<ShieldedChatStream> {
+    const { shieldInstance, context, inputResult, finalParams } =
+      await this.scanInput(params as ChatCompletionParams);
+
+    // --- Make streaming API call ---
+    const stream = await this.client.chat.completions.create({
+      ...finalParams,
+      stream: true,
+    }) as AsyncIterable<ChatCompletionChunk>;
+
+    return new ShieldedChatStream(
+      stream,
+      inputResult,
+      shieldInstance,
+      context,
+      this.config.scanOutput ?? false,
+      this.config.agentId,
+      finalParams.model,
+    );
   }
 
   /** Replace user message content with sanitized version */
@@ -242,6 +294,108 @@ export class ShieldedOpenAI {
     if (this.shield) {
       await this.shield.close();
     }
+  }
+}
+
+// ============================================================
+// ShieldedChatStream — Async iterable wrapper for streaming
+// Scans input before stream, accumulates output, scans after
+// ============================================================
+
+export class ShieldedChatStream implements AsyncIterable<ChatCompletionChunk> {
+  private _inputResult: ScanResult;
+  private _outputResult: ScanResult | undefined;
+  private _done = false;
+  private _fullText = "";
+  private _stream: AsyncIterable<ChatCompletionChunk>;
+  private _shieldInstance: AIShield;
+  private _context: ScanContext;
+  private _scanOutput: boolean;
+  private _agentId: string | undefined;
+  private _model: string;
+  private _usage: { prompt_tokens: number; completion_tokens: number } | undefined;
+
+  constructor(
+    stream: AsyncIterable<ChatCompletionChunk>,
+    inputResult: ScanResult,
+    shieldInstance: AIShield,
+    context: ScanContext,
+    scanOutput: boolean,
+    agentId: string | undefined,
+    model: string,
+  ) {
+    this._stream = stream;
+    this._inputResult = inputResult;
+    this._shieldInstance = shieldInstance;
+    this._context = context;
+    this._scanOutput = scanOutput;
+    this._agentId = agentId;
+    this._model = model;
+  }
+
+  async *[Symbol.asyncIterator](): AsyncGenerator<ChatCompletionChunk> {
+    for await (const chunk of this._stream) {
+      // Accumulate text content
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) {
+        this._fullText += content;
+      }
+
+      // Capture usage if present (typically in the last chunk)
+      if (chunk.usage) {
+        this._usage = {
+          prompt_tokens: chunk.usage.prompt_tokens,
+          completion_tokens: chunk.usage.completion_tokens,
+        };
+      }
+
+      yield chunk;
+    }
+
+    // --- Post-stream: record cost ---
+    if (this._agentId && this._usage) {
+      await this._shieldInstance.recordCost(
+        this._agentId,
+        this._model,
+        this._usage.prompt_tokens,
+        this._usage.completion_tokens,
+      );
+    }
+
+    // --- Post-stream: scan output ---
+    if (this._scanOutput && this._fullText) {
+      this._outputResult = await this._shieldInstance.scan(
+        this._fullText,
+        this._context,
+      );
+    }
+
+    this._done = true;
+  }
+
+  /** Input scan result (available immediately) */
+  get inputResult(): ScanResult {
+    return this._inputResult;
+  }
+
+  /** Output scan result (available after stream completes) */
+  get outputResult(): ScanResult | undefined {
+    return this._outputResult;
+  }
+
+  /** Combined shield results */
+  get shieldResult(): { input: ScanResult; output?: ScanResult } {
+    return { input: this._inputResult, output: this._outputResult };
+  }
+
+  /** Whether the stream has completed */
+  get done(): boolean {
+    return this._done;
+  }
+
+  /** Full accumulated text from the stream */
+  get text(): string {
+    return this._fullText;
   }
 }
 

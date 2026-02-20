@@ -214,12 +214,22 @@ export interface ToolConfig {
   manifestPins?: ToolManifestPin[];
 }
 
+export interface CacheConfig {
+  /** Disable caching (default: enabled when cache config is provided) */
+  enabled?: boolean;
+  /** Maximum cached entries (default: 1000) */
+  maxSize?: number;
+  /** TTL in milliseconds (default: 300_000 = 5 minutes) */
+  ttlMs?: number;
+}
+
 export interface ShieldConfig {
   injection?: InjectionConfig;
   pii?: PIIConfig;
   cost?: CostConfig;
   audit?: AuditConfig;
   tools?: ToolConfig;
+  cache?: CacheConfig;
   preset?: PresetName;
 }
 

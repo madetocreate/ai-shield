@@ -121,6 +121,67 @@ const response = await shielded.createMessage({
 });
 ```
 
+### Level 2b: Streaming (OpenAI)
+
+```ts
+import OpenAI from "openai";
+import { createShield } from "@ai-shield/openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const shielded = createShield(openai, {
+  agentId: "chatbot",
+  scanOutput: true,  // scan LLM output too
+});
+
+// Returns an async iterable — use for...await like any stream
+const stream = await shielded.createChatCompletionStream({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: userInput }],
+});
+
+// Input is scanned BEFORE the stream starts — blocked inputs throw ShieldBlockError
+// Access scan result immediately (before iterating)
+console.log(stream.inputResult.decision); // "allow" | "warn" | "block"
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content ?? "");
+}
+
+// After iteration: full accumulated text + output scan result
+console.log(stream.text);          // "Hello, how can I help you?"
+console.log(stream.outputResult);  // ScanResult | undefined
+console.log(stream.shieldResult);  // { input: ScanResult, output?: ScanResult }
+```
+
+### Level 2c: Streaming (Anthropic)
+
+```ts
+import Anthropic from "@anthropic-ai/sdk";
+import { createShield } from "@ai-shield/anthropic";
+
+const anthropic = new Anthropic();
+const shielded = createShield(anthropic, {
+  agentId: "support-bot",
+  scanOutput: true,
+});
+
+const stream = await shielded.createMessageStream({
+  model: "claude-sonnet-4-6",
+  max_tokens: 1024,
+  messages: [{ role: "user", content: userInput }],
+});
+
+for await (const event of stream) {
+  if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+    process.stdout.write(event.delta.text ?? "");
+  }
+}
+
+console.log(stream.text);        // full accumulated response
+console.log(stream.done);        // true
+console.log(stream.shieldResult); // { input, output }
+```
+
 ### Level 3: Express Middleware
 
 ```ts
@@ -215,6 +276,12 @@ const shield = new AIShield({
     store: "postgresql",     // "postgresql" | "memory" | "console"
     batchSize: 100,
     flushIntervalMs: 1000,
+  },
+
+  // LRU Cache — skip re-scanning identical inputs (huge perf win at scale)
+  cache: {
+    maxSize: 1000,           // max cached entries (LRU eviction)
+    ttlMs: 300_000,          // 5 minutes TTL per entry
   },
 });
 
@@ -663,7 +730,7 @@ ai-shield/
 ## Tests
 
 ```bash
-npm test            # 193 tests, <700ms
+npm test            # 232 tests, <700ms
 ```
 
 | Suite | Tests | Covers |
@@ -678,6 +745,9 @@ npm test            # 193 tests, <700ms
 | Audit | 13 | Logging, SHA-256 hashing, batching, flush, close |
 | Tool Policy | 12 | Allow/deny, wildcards, manifest pin/drift, performance |
 | OpenAI Wrapper | 9 | Clean input, injection blocking, PII masking, callbacks, output scan |
+| Anthropic Stream | 9 | Chunk accumulation, pre-stream blocking, cost recording, output scan |
+| OpenAI Stream | 10 | Chunk accumulation, pre-stream blocking, cost recording, done/text props |
+| LRU Cache | 20 | Get/set, LRU eviction, TTL expiry, prune, AIShield integration |
 | Canary | 7 | Token injection, uniqueness, leak detection |
 | Anthropic Wrapper | 7 | Clean input, injection blocking, PII masking, multi-block, output scan |
 

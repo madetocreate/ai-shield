@@ -4,11 +4,13 @@
 
 export {
   ShieldedAnthropic,
+  ShieldedAnthropicStream,
   ShieldBlockError,
   ShieldBudgetError,
   type ShieldedAnthropicConfig,
   type AnthropicMessage,
   type AnthropicCreateParams,
+  type AnthropicStreamEvent,
 } from "./wrapper.js";
 
 export type {
