@@ -1,0 +1,27 @@
+{
+  "name": "@ai-shield/core",
+  "version": "0.1.0",
+  "description": "LLM Security SDK — Prompt Injection Detection, PII Protection, Cost Control, Audit",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "ioredis": ">=5.0.0",
+    "pg": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ioredis": { "optional": true },
+    "pg": { "optional": true }
+  },
+  "license": "MIT"
+}

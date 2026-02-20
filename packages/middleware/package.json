@@ -1,0 +1,43 @@
+{
+  "name": "@ai-shield/middleware",
+  "version": "0.1.0",
+  "description": "AI Shield middleware for Express and Hono — route-level LLM protection",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./express": {
+      "types": "./dist/express.d.ts",
+      "import": "./dist/express.js"
+    },
+    "./hono": {
+      "types": "./dist/hono.d.ts",
+      "import": "./dist/hono.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "express": ">=4.0.0",
+    "hono": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": { "optional": true },
+    "hono": { "optional": true }
+  },
+  "dependencies": {
+    "@ai-shield/core": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "express": "^4.21.0",
+    "hono": "^4.7.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "ai-shield",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LLM Security Middleware — Prompt Injection, PII Protection, Cost Control, Audit Trail",
+  "workspaces": [
+    "packages/core",
+    "packages/openai",
+    "packages/anthropic",
+    "packages/middleware"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf packages/*/dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT"
+}

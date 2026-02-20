@@ -1,0 +1,28 @@
+{
+  "name": "@ai-shield/openai",
+  "version": "0.1.0",
+  "description": "AI Shield wrapper for OpenAI SDK — automatic input/output scanning",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "openai": ">=4.0.0"
+  },
+  "dependencies": {
+    "@ai-shield/core": "0.1.0"
+  },
+  "devDependencies": {
+    "openai": "^4.77.0",
+    "typescript": "^5.7.0"
+  }
+}

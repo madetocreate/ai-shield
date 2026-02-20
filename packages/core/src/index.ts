@@ -1,0 +1,87 @@
+// ============================================================
+// @ai-shield/core — Public API
+// ============================================================
+
+// Main class
+export { AIShield } from "./shield.js";
+
+// Scanners (for custom chain building)
+export { HeuristicScanner, type HeuristicConfig } from "./scanner/heuristic.js";
+export { PIIScanner } from "./scanner/pii.js";
+export { ScannerChain, type ChainConfig } from "./scanner/chain.js";
+export { injectCanary, checkCanaryLeak } from "./scanner/canary.js";
+
+// Policy
+export { PolicyEngine, type PolicyPreset } from "./policy/engine.js";
+export { ToolPolicyScanner } from "./policy/tools.js";
+
+// Cost
+export { CostTracker, type RedisLike } from "./cost/tracker.js";
+export { detectAnomaly, type AnomalyResult } from "./cost/anomaly.js";
+export { getModelPricing, estimateCost, MODEL_PRICING } from "./cost/pricing.js";
+
+// Audit
+export { AuditLogger, ConsoleAuditStore, MemoryAuditStore } from "./audit/logger.js";
+export type { AuditStore } from "./audit/types.js";
+
+// Types (re-export everything)
+export type {
+  // Scanner
+  ScanDecision,
+  ScanResult,
+  ScannerResult,
+  Scanner,
+  ScanContext,
+  Violation,
+  ViolationType,
+  // PII
+  PIIType,
+  PIIAction,
+  PIIEntity,
+  PIIConfig,
+  // Tool
+  ToolCall,
+  ToolPermissions,
+  ToolPolicy,
+  ToolManifestPin,
+  // Cost
+  BudgetPeriod,
+  BudgetConfig,
+  CostEstimate,
+  CostRecord,
+  BudgetCheckResult,
+  ModelPricing,
+  // Audit
+  AuditRecord,
+  AuditConfig,
+  // Config
+  ShieldConfig,
+  InjectionConfig,
+  CostConfig,
+  ToolConfig,
+  PresetName,
+} from "./types.js";
+
+// --- Convenience function ---
+
+import { AIShield } from "./shield.js";
+import type { ShieldConfig, ScanResult, ScanContext } from "./types.js";
+
+/** Quick scan — one line, maximum protection */
+export async function shield(
+  input: string,
+  configOrContext?: ShieldConfig | ScanContext,
+): Promise<ScanResult> {
+  // Detect if second arg is config or context
+  const isConfig = configOrContext && ("injection" in configOrContext || "pii" in configOrContext || "cost" in configOrContext || "preset" in configOrContext && typeof configOrContext.preset === "string" && !("agentId" in configOrContext));
+
+  const config = isConfig ? (configOrContext as ShieldConfig) : {};
+  const context = isConfig ? {} : (configOrContext as ScanContext) ?? {};
+
+  const instance = new AIShield(config);
+  try {
+    return await instance.scan(input, context);
+  } finally {
+    await instance.close();
+  }
+}
