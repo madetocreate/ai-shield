@@ -1,10 +1,13 @@
 node_modules/
 dist/
-*.tsbuildinfo
+*.js.map
 .env
 .env.*
 !.env.example
-coverage/
 .DS_Store
+Thumbs.db
 *.log
+coverage/
+.vitest/
+*.tsbuildinfo
 CLAUDE.md
