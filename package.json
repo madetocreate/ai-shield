@@ -18,6 +18,7 @@
     "ai",
     "openai",
     "anthropic",
+    "gemini",
     "middleware",
     "typescript",
     "mcp"
@@ -26,6 +27,7 @@
     "packages/core",
     "packages/openai",
     "packages/anthropic",
+    "packages/gemini",
     "packages/middleware"
   ],
   "scripts": {

@@ -67,6 +67,7 @@ User Input → [AI Shield Scanner Chain] → LLM Provider
 | `ai-shield-core` | Scanner chain, PII, injection detection, tool policy, cost tracking, audit |
 | `ai-shield-openai` | Drop-in wrapper for OpenAI SDK |
 | `ai-shield-anthropic` | Drop-in wrapper for Anthropic SDK |
+| `ai-shield-gemini` | Drop-in wrapper for Google Gemini SDK |
 | `ai-shield-middleware` | Express and Hono middleware |
 
 ---
@@ -190,6 +191,52 @@ for await (const event of stream) {
 console.log(stream.text);        // full accumulated response
 console.log(stream.done);        // true
 console.log(stream.shieldResult); // { input, output }
+```
+
+### Level 2d: Gemini Wrapper
+
+```ts
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createShield } from "ai-shield-gemini";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+const shielded = createShield(model, {
+  agentId: "chatbot",
+  shield: {
+    pii: { action: "mask", locale: "de-DE" },
+  },
+});
+
+const result = await shielded.generateContent("What services do you offer?");
+console.log(result.response.text());
+console.log(result._shield?.input.safe);
+```
+
+### Level 2e: Streaming (Gemini)
+
+```ts
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createShield } from "ai-shield-gemini";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+const shielded = createShield(model, {
+  agentId: "chatbot",
+  scanOutput: true,
+});
+
+const stream = await shielded.generateContentStream("Tell me about your products");
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.text());
+}
+
+console.log(stream.text);          // full accumulated response
+console.log(stream.done);          // true
+console.log(stream.shieldResult);  // { input, output }
 ```
 
 ### Level 3: Express Middleware
@@ -708,6 +755,11 @@ ai-shield/
 │   │       ├── index.ts       createShield() factory
 │   │       └── wrapper.ts     ShieldedAnthropic class
 │   │
+│   ├── gemini/               ai-shield-gemini
+│   │   └── src/
+│   │       ├── index.ts       createShield() factory
+│   │       └── wrapper.ts     ShieldedGemini class
+│   │
 │   └── middleware/            ai-shield-middleware
 │       └── src/
 │           ├── index.ts       Combined exports
@@ -728,6 +780,8 @@ ai-shield/
 │       ├── tools.test.ts             12 tests
 │       ├── openai-wrapper.test.ts     9 tests
 │       ├── canary.test.ts             7 tests
+│       ├── gemini-wrapper.test.ts    12 tests
+│       ├── gemini-stream.test.ts     5 tests
 │       └── anthropic-wrapper.test.ts  7 tests
 │
 ├── package.json               Monorepo root (npm workspaces)
@@ -740,7 +794,7 @@ ai-shield/
 ## Tests
 
 ```bash
-npm test            # 303 tests, <1s
+npm test            # 320 tests, <1s
 ```
 
 | Suite | Tests | Covers |
@@ -759,6 +813,8 @@ npm test            # 303 tests, <1s
 | OpenAI Stream | 10 | Chunk accumulation, pre-stream blocking, cost recording, done/text props |
 | LRU Cache | 20 | Get/set, LRU eviction, TTL expiry, prune, AIShield integration |
 | Canary | 7 | Token injection, uniqueness, leak detection |
+| Gemini Wrapper | 12 | Clean input (string, array, params), injection blocking, PII masking, callbacks, output scan, tool context |
+| Gemini Stream | 5 | Chunk accumulation, pre-stream blocking, output scan, shieldResult, response promise |
 | Anthropic Wrapper | 7 | Clean input, injection blocking, PII masking, multi-block, output scan |
 
 ---
@@ -773,6 +829,7 @@ Minimal by design. Core has zero runtime dependencies. Optional peer deps for Re
 | `pg` | No | PostgreSQL audit logging |
 | `openai` | Peer dep of `ai-shield-openai` | OpenAI SDK wrapper |
 | `@anthropic-ai/sdk` | Peer dep of `ai-shield-anthropic` | Anthropic SDK wrapper |
+| `@google/generative-ai` | Peer dep of `ai-shield-gemini` | Gemini SDK wrapper |
 | `express` | Peer dep of `ai-shield-middleware` | Express middleware |
 | `hono` | Peer dep of `ai-shield-middleware` | Hono middleware |
 
@@ -781,7 +838,7 @@ Minimal by design. Core has zero runtime dependencies. Optional peer deps for Re
 ## Roadmap
 
 - [x] LRU scan cache (TTL + LRU eviction)
-- [x] Streaming support (OpenAI + Anthropic)
+- [x] Streaming support (OpenAI + Anthropic + Gemini)
 - [x] Canary token detection
 - [ ] ONNX DeBERTa ML classifier (optional, <20ms)
 - [ ] LLM-as-Judge async verification
