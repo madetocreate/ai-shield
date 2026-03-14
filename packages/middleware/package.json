@@ -1,5 +1,5 @@
 {
-  "name": "@ai-shield/middleware",
+  "name": "ai-shield-middleware",
   "version": "0.1.0",
   "description": "AI Shield middleware for Express and Hono — route-level LLM protection",
   "type": "module",
@@ -32,7 +32,7 @@
     "hono": { "optional": true }
   },
   "dependencies": {
-    "@ai-shield/core": "0.1.0"
+    "ai-shield-core": "0.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

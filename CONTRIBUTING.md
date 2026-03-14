@@ -38,7 +38,7 @@ npx vitest run tests/unit/heuristic.test.ts  # Single test file
 
 - **TypeScript strict** — `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters`
 - **No `any`** — ever
-- **Zero runtime dependencies** in `@ai-shield/core` — everything optional via peer deps
+- **Zero runtime dependencies** in `ai-shield-core` — everything optional via peer deps
 - **All scanners** implement the `Scanner` interface from `types.ts`
 - **Tests must pass** before any PR
 

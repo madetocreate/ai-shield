@@ -10,4 +10,4 @@ export type { ShieldMiddlewareConfig } from "./shared.js";
 export { shieldMiddleware as expressShield } from "./express.js";
 export { shieldMiddleware as honoShield } from "./hono.js";
 
-export type { ScanResult } from "@ai-shield/core";
+export type { ScanResult } from "ai-shield-core";

@@ -1,5 +1,5 @@
 {
-  "name": "@ai-shield/openai",
+  "name": "ai-shield-openai",
   "version": "0.1.0",
   "description": "AI Shield wrapper for OpenAI SDK — automatic input/output scanning",
   "type": "module",
@@ -19,7 +19,7 @@
     "openai": ">=4.0.0"
   },
   "dependencies": {
-    "@ai-shield/core": "0.1.0"
+    "ai-shield-core": "0.1.0"
   },
   "devDependencies": {
     "openai": "^4.77.0",

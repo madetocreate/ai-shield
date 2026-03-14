@@ -1,5 +1,5 @@
 {
-  "name": "@ai-shield/core",
+  "name": "ai-shield-core",
   "version": "0.1.0",
   "description": "LLM Security SDK — Prompt Injection Detection, PII Protection, Cost Control, Audit",
   "main": "dist/index.js",

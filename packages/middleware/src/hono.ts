@@ -1,4 +1,4 @@
-import type { ScanResult } from "@ai-shield/core";
+import type { ScanResult } from "ai-shield-core";
 import type { ShieldMiddlewareConfig } from "./shared.js";
 import { defaultGetInput, scanRequest } from "./shared.js";
 

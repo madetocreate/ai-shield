@@ -1,4 +1,4 @@
-import type { AIShield, ShieldConfig, ScanContext, ScanResult } from "@ai-shield/core";
+import type { AIShield, ShieldConfig, ScanContext, ScanResult } from "ai-shield-core";
 
 // ============================================================
 // Shared middleware logic — used by Express and Hono adapters
@@ -72,7 +72,7 @@ export async function getOrCreateShield(config: ShieldMiddlewareConfig): Promise
   if (_sharedShield) return _sharedShield;
   if (_shieldReady) return _shieldReady;
 
-  _shieldReady = import("@ai-shield/core").then((mod) => {
+  _shieldReady = import("ai-shield-core").then((mod) => {
     _sharedShield = new mod.AIShield(config.shield ?? {});
     return _sharedShield;
   });

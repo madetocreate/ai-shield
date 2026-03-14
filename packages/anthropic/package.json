@@ -1,5 +1,5 @@
 {
-  "name": "@ai-shield/anthropic",
+  "name": "ai-shield-anthropic",
   "version": "0.1.0",
   "description": "AI Shield wrapper for Anthropic SDK — automatic input/output scanning",
   "type": "module",
@@ -19,7 +19,7 @@
     "@anthropic-ai/sdk": ">=0.30.0"
   },
   "dependencies": {
-    "@ai-shield/core": "0.1.0"
+    "ai-shield-core": "0.1.0"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

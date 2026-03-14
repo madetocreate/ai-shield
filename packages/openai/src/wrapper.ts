@@ -1,4 +1,4 @@
-import type { AIShield, ShieldConfig, ScanContext, ScanResult } from "@ai-shield/core";
+import type { AIShield, ShieldConfig, ScanContext, ScanResult } from "ai-shield-core";
 
 // ============================================================
 // OpenAI Shield Wrapper — Drop-in replacement
@@ -98,7 +98,7 @@ export class ShieldedOpenAI {
     if (this.shield) return this.shield;
     if (this._shieldReady) return this._shieldReady;
 
-    this._shieldReady = import("@ai-shield/core").then((mod) => {
+    this._shieldReady = import("ai-shield-core").then((mod) => {
       this.shield = new mod.AIShield(this.shieldConfig);
       return this.shield;
     });

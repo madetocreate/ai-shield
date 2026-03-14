@@ -16,7 +16,7 @@ export type {
   ShieldConfig,
   ScanResult,
   ScanContext,
-} from "@ai-shield/core";
+} from "ai-shield-core";
 
 // --- Convenience factory ---
 
